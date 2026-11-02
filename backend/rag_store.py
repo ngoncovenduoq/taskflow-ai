@@ -130,11 +130,103 @@ def search_documents(
     if collection.count() == 0:
         return []
 
-    results = collection.query(
-        query_texts=[question],
-        n_results=min(top_k, collection.count()),
-        include=["documents", "metadatas"]
+    question_lower = question.lower()
+
+    # 1. Lay danh sach ten PDF trong ChromaDB
+    stored = collection.get(
+        include=["metadatas"]
     )
+
+    filenames = set()
+
+    for metadata in stored["metadatas"]:
+        if metadata and metadata.get("filename"):
+            filenames.add(metadata["filename"])
+
+    # 2. Xac dinh PDF duoc nhac den trong cau hoi
+    filename = None
+
+    for name in sorted(filenames, key=len, reverse=True):
+        if name.lower() in question_lower:
+            filename = name
+            break
+
+    # 3. Tao bo loc theo ten PDF
+    where_filter = None
+    page_offset = 0
+
+    if filename:
+        where_filter = {"filename": filename}
+
+        file_data = collection.get(
+            where=where_filter,
+            include=["documents", "metadatas"]
+        )
+
+        if not file_data["ids"]:
+            return []
+
+        available_chunks = len(file_data["ids"])
+
+        # Xac dinh trang dau cua tai lieu
+        first_page = min(
+            int(metadata["page"])
+            for metadata in file_data["metadatas"]
+        )
+
+        # Chuan hoa so trang neu du lieu bat dau tu 0
+        page_offset = 1 if first_page == 0 else 0
+
+        # 4. Xu ly cau hoi ve trang bia
+        cover_keywords = [
+            "trang bìa",
+            "tên đề tài",
+            "tên tài liệu",
+            "tiêu đề"
+        ]
+
+        is_cover_question = any(
+            keyword in question_lower
+            for keyword in cover_keywords
+        )
+
+        if is_cover_question:
+
+            cover_output = []
+
+            for text, metadata in zip(
+                file_data["documents"],
+                file_data["metadatas"]
+            ):
+
+                if int(metadata["page"]) == first_page:
+
+                    cover_output.append({
+                        "filename": filename,
+                        "page": int(metadata["page"]) + page_offset,
+                        "text": text
+                    })
+
+                if len(cover_output) >= top_k:
+                    break
+
+            if cover_output:
+                return cover_output
+
+    else:
+        available_chunks = collection.count()
+
+    # 5. Semantic search
+    query_args = {
+        "query_texts": [question],
+        "n_results": min(top_k, available_chunks),
+        "include": ["documents", "metadatas"]
+    }
+
+    if where_filter:
+        query_args["where"] = where_filter
+
+    results = collection.query(**query_args)
 
     output = []
 
@@ -145,12 +237,11 @@ def search_documents(
 
         output.append({
             "filename": metadata["filename"],
-            "page": metadata["page"],
+            "page": int(metadata["page"]) + page_offset,
             "text": text
         })
 
     return output
-
 
 # 6. Kiem thu truc tiep
 if __name__ == "__main__":

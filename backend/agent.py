@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from langchain.tools import tool
 from langchain.agents import create_agent
-from langchain_groq import ChatGroq
+from langchain_openrouter import ChatOpenRouter
 
 from database import (
     init_db,
@@ -93,7 +93,7 @@ def search_pdf(question: str) -> str:
     print(f"[DOCUMENT AGENT] Searching PDF: {question}")
     results = search_documents(
         question=question,
-        top_k=2
+        top_k=3
     )
 
     if not results:
@@ -111,7 +111,7 @@ def search_pdf(question: str) -> str:
             f"Page: {item['page']}"
         )
 
-        content = item["text"][:450]
+        content = item["text"][:800]
 
         output.append(
             f"{source}\nContent:\n{content}"
@@ -120,13 +120,22 @@ def search_pdf(question: str) -> str:
     return "\n\n".join(output)
 
 
-# 8. Ket noi Groq
-model = ChatGroq(
+# 8. Kiem tra OpenRouter API key
+if not os.getenv("OPENROUTER_API_KEY"):
+    raise RuntimeError(
+        "OPENROUTER_API_KEY is missing. Check backend/.env"
+    )
+
+
+# Ket noi GPT-OSS-120B qua OpenRouter
+model = ChatOpenRouter(
     model=os.getenv(
-        "GROQ_MODEL",
-        "openai/gpt-oss-20b"
+        "OPENROUTER_MODEL",
+        "openai/gpt-oss-120b"
     ),
-    max_tokens=1024
+    max_tokens=2048,
+    reasoning={"effort": "low"},
+    max_retries=2
 )
 
 

@@ -24,3 +24,6 @@ tasks.db
 # Editor files
 .vscode/
 .idea/
+
+backend/data/
+backend/chroma_db/

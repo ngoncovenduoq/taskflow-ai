@@ -207,16 +207,13 @@ GENERAL
             )
 
         except Exception as error:
+            # A billing/rate-limit/network error is not a classification
+            # error. Do not trigger additional paid calls via a fallback.
             print(
-                "[SUPERVISOR] Router error: "
-                f"{type(error).__name__}. "
-                "Using fallback."
+                "[SUPERVISOR] Router request failed: "
+                f"{type(error).__name__}"
             )
-
-            if requires_research_and_writing(message):
-                route = "research_write"
-            else:
-                route = "general"
+            raise
 
         print(f"[SUPERVISOR] AI Route: {route}")
 

@@ -1,11 +1,14 @@
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+import logging
+
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field, field_validator
 
 from agent import ask_agent
 from document_api import router as document_router
-from groq import RateLimitError
-from fastapi import HTTPException
+from api_errors import to_http_exception, upstream_status
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="TaskFlow AI",
@@ -15,7 +18,15 @@ app = FastAPI(
 app.include_router(document_router)
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=6000)
+
+    @field_validator("message")
+    @classmethod
+    def not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("message không được để trống")
+        return value
 
 
 @app.get("/")
@@ -40,11 +51,14 @@ def chat(request: ChatRequest):
             "response": answer
         }
 
-    except RateLimitError:
-        raise HTTPException(
-            status_code=429,
-            detail=(
-                "Groq Free da het han muc token. "
-                "Vui long thu lai khi han muc duoc lam moi."
-            )
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        # Do not log full exception text: SDK errors may contain prompt data.
+        logger.error(
+            "Chat failed: type=%s upstream_status=%s",
+            type(error).__name__,
+            upstream_status(error),
         )
+        raise to_http_exception(error) from error

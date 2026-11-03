@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, field_validator
 from agent import ask_agent_with_usage
 from document_api import router as document_router
 from api_errors import to_http_exception, upstream_status
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,14 @@ app = FastAPI(
     version="1.0.0"
 )
 app.include_router(document_router)
+
+FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+
+app.mount(
+    "/ui",
+    StaticFiles(directory=str(FRONTEND_DIR), html=True),
+    name="frontend"
+)
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=6000)

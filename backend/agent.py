@@ -8,6 +8,9 @@ from langchain_openrouter import ChatOpenRouter
 from research_search import search_web
 from writing_agent import write_content
 from supervisor import build_supervisor
+from time import perf_counter
+from langchain_core.callbacks import get_usage_metadata_callback
+from usage_tracker import summarize_usage
 
 from database import (
     init_db,
@@ -260,10 +263,51 @@ agent = create_agent(
 supervisor = build_supervisor(agent)
 
 # 10. Ham main.py goi Agent
+def ask_agent_with_usage(message: str) -> dict:
+    """Run Supervisor and collect token usage for one request."""
+
+    started = perf_counter()
+
+    with get_usage_metadata_callback() as callback:
+
+        result = supervisor.invoke({
+            "message": message
+        })
+
+    duration_ms = round(
+        (perf_counter() - started) * 1000,
+        2
+    )
+
+    usage = summarize_usage(
+        callback.usage_metadata
+    )
+
+    usage["route"] = result.get(
+        "route",
+        "unknown"
+    )
+
+    usage["duration_ms"] = duration_ms
+
+    print(
+        "[TOKEN TRACKER] "
+        f"Route: {usage['route']}, "
+        f"Input: {usage['input_tokens']}, "
+        f"Output: {usage['output_tokens']}, "
+        f"Total: {usage['total_tokens']}, "
+        f"Estimated USD: {usage['estimated_cost_usd']}"
+    )
+
+    return {
+        "response": result["response"],
+        "usage": usage
+    }
+
+
+# Giu tuong thich voi cac cho goi ham cu
 def ask_agent(message: str) -> str:
 
-    result = supervisor.invoke({
-        "message": message
-    })
+    result = ask_agent_with_usage(message)
 
     return result["response"]

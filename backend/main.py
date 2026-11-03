@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
-from agent import ask_agent
+from agent import ask_agent_with_usage
 from document_api import router as document_router
 from api_errors import to_http_exception, upstream_status
 
@@ -45,11 +45,7 @@ def health():
 def chat(request: ChatRequest):
 
     try:
-        answer = ask_agent(request.message)
-
-        return {
-            "response": answer
-        }
+        return ask_agent_with_usage(request.message)
 
     except HTTPException:
         raise

@@ -6,6 +6,8 @@ from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_openrouter import ChatOpenRouter
 from research_search import search_web
+from writing_agent import write_content
+from supervisor import build_supervisor
 
 from database import (
     init_db,
@@ -145,6 +147,13 @@ def web_research(query: str) -> str:
 
     return "\n\n".join(output)
 
+# Writing Agent Tool
+@tool
+def writing_tool(request: str) -> str:
+    """Write emails, articles, reports, summaries, and rewrite text."""
+
+    return write_content(request)
+
 # 8. Kiem tra OpenRouter API key
 if not os.getenv("OPENROUTER_API_KEY"):
     raise RuntimeError(
@@ -156,9 +165,9 @@ if not os.getenv("OPENROUTER_API_KEY"):
 model = ChatOpenRouter(
     model=os.getenv(
         "OPENROUTER_MODEL",
-        "openai/gpt-oss-120b"
+        "openai/gpt-oss-20b"
     ),
-    max_tokens=2048,
+    max_tokens=1200,
     reasoning={"effort": "low"},
     max_retries=2
 )
@@ -173,7 +182,8 @@ agent = create_agent(
         mark_task_completed,
         remove_task,
         search_pdf,
-        web_research
+        web_research,
+        writing_tool
     ],
     system_prompt=(
         "You are TaskFlow AI, a helpful AI assistant. "
@@ -228,40 +238,32 @@ agent = create_agent(
 
         "Use web_research for questions requiring internet information. "
 
-        "Always respond in the user's language."
+        "Always respond in the user's language. "
+
+        "For writing requests such as emails, articles, "
+        "reports, and rewriting, always use the writing_tool. "
+
+        "Pass the user's writing requirements to the writing_tool. "
+
+        "Do not invent the user's personal information, "
+        "experience, achievements, or qualifications. "
+
+        "For requests requiring both web research and writing, "
+        "use web_research to gather information first, "
+        "then use writing_tool to create the final content. "
+
+        "Only cite source URLs that were actually returned "
+        "by the web_research tool. "
     )
 )
-
+# Khoi tao Supervisor workflow
+supervisor = build_supervisor(agent)
 
 # 10. Ham main.py goi Agent
 def ask_agent(message: str) -> str:
 
-    result = agent.invoke({
-        "messages": [
-            {
-                "role": "user",
-                "content": message
-            }
-        ]
+    result = supervisor.invoke({
+        "message": message
     })
 
-    content = result["messages"][-1].content
-
-    if isinstance(content, str):
-        return content
-
-    if isinstance(content, list):
-
-        texts = []
-
-        for block in content:
-
-            if isinstance(block, dict):
-                if block.get("type") == "text":
-                    texts.append(
-                        block.get("text", "")
-                    )
-
-        return "\n".join(texts).strip()
-
-    return str(content)
+    return result["response"]

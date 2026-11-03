@@ -19,6 +19,11 @@ const insightsToggle = $("#toggle-insights");
 const insightsStorageKey = "taskflow:token-panel-open-v3";
 
 let requestInFlight = false;
+let latestDashboardRequest = 0;
+let latestTasksRequest = 0;
+let taskMutationInFlight = false;
+let taskRows = [];
+let activeTaskFilter = "all";
 
 function readInsightsPreference() {
   // Persist the UI choice only; chat content and prompts are never stored.
@@ -177,6 +182,248 @@ function renderUsage(usage) {
   renderModels(hasUsage ? usage.by_model : []);
 }
 
+async function refreshDashboard() {
+  const requestNumber = ++latestDashboardRequest;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch("/dashboard/summary", {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error(`Dashboard API HTTP ${response.status}`);
+    const data = await response.json();
+
+    const validCount = (value) => Number.isInteger(value) && value >= 0;
+    if (!data ||
+        !validCount(data.total_tasks) ||
+        !validCount(data.unfinished_tasks) ||
+        !validCount(data.completed_tasks) ||
+        data.unfinished_tasks + data.completed_tasks !== data.total_tasks ||
+        typeof data.completion_percent !== "number" ||
+        !Number.isFinite(data.completion_percent) ||
+        data.completion_percent < 0 || data.completion_percent > 100) {
+      throw new Error("Dashboard API returned invalid stats");
+    }
+
+    if (requestNumber !== latestDashboardRequest) return;
+    setText("#total-tasks", numberOrDash(data.total_tasks));
+    setText("#unfinished-tasks", numberOrDash(data.unfinished_tasks));
+    setText("#completed-tasks", numberOrDash(data.completed_tasks));
+    setText("#total-tasks-note", "Đồng bộ từ SQLite");
+    $("#progress-fill").style.width = `${data.completion_percent}%`;
+    setText("#progress-percent", data.total_tasks > 0 ? `${numberOrDash(data.completion_percent)}%` : "0%");
+    setText("#progress-detail", data.total_tasks > 0
+      ? `${data.completed_tasks} trong ${data.total_tasks} công việc đã hoàn thành.`
+      : "Chưa có công việc. Mở mục Công việc để tạo mới miễn phí.");
+  } catch (_) {
+    if (requestNumber !== latestDashboardRequest) return;
+    setText("#total-tasks", "—");
+    setText("#unfinished-tasks", "—");
+    setText("#completed-tasks", "—");
+    setText("#total-tasks-note", "Chưa kết nối API thống kê");
+    setText("#progress-percent", "—");
+    $("#progress-fill").style.width = "0%";
+    setText("#progress-detail", "Không tải được thống kê. Kiểm tra GET /dashboard/summary.");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function setActiveNav(button) {
+  document.querySelectorAll(".nav-item").forEach((item) => {
+    item.classList.remove("is-active");
+    item.removeAttribute("aria-current");
+  });
+  button.classList.add("is-active");
+  button.setAttribute("aria-current", "page");
+}
+
+function showDashboard() {
+  $("#tasks-section").hidden = true;
+  $(".chat-section").hidden = false;
+  setActiveNav($("[data-nav='assistant']"));
+}
+
+function showTaskManager(focusInput = false) {
+  $("#tasks-section").hidden = false;
+  $(".chat-section").hidden = true;
+  setActiveNav($("#open-tasks"));
+  void refreshTasks();
+  if (focusInput) $("#task-title").focus();
+}
+
+function setTasksStatus(message, isError = false) {
+  const element = $("#tasks-status");
+  element.textContent = message;
+  element.classList.toggle("is-error", isError);
+}
+
+function renderTasks() {
+  const list = $("#task-list");
+  list.replaceChildren();
+
+  const filtered = taskRows.filter((task) =>
+    activeTaskFilter === "all" ||
+    (activeTaskFilter === "completed" && task.completed) ||
+    (activeTaskFilter === "unfinished" && !task.completed)
+  );
+
+  if (filtered.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "tasks-empty";
+    empty.textContent = taskRows.length === 0
+      ? "Chưa có công việc nào. Hãy tạo công việc đầu tiên ở ô bên trên."
+      : "Không có công việc nào ở bộ lọc này.";
+    list.append(empty);
+    return;
+  }
+
+  for (const task of filtered) {
+    const row = document.createElement("li");
+    row.className = task.completed ? "task-row is-complete" : "task-row";
+
+    const icon = document.createElement("span");
+    icon.className = "task-row-check";
+    icon.textContent = task.completed ? "✓" : "◷";
+    icon.setAttribute("aria-hidden", "true");
+
+    const info = document.createElement("div");
+    info.className = "task-row-info";
+    const title = document.createElement("strong");
+    title.textContent = task.title; // Never interpret SQLite text as HTML.
+    const meta = document.createElement("small");
+    meta.textContent = `#${task.id} · ${task.completed ? "Đã hoàn thành" : "Chưa hoàn thành"}`;
+    info.append(title, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "task-row-actions";
+    if (!task.completed) {
+      const complete = document.createElement("button");
+      complete.type = "button";
+      complete.className = "task-complete";
+      complete.textContent = "✓ Hoàn thành";
+      complete.setAttribute("aria-label", `Đánh dấu hoàn thành: ${task.title}`);
+      complete.addEventListener("click", () => { void mutateTask("complete", task); });
+      actions.append(complete);
+    }
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "task-delete";
+    remove.textContent = "Xóa";
+    remove.setAttribute("aria-label", `Xóa công việc: ${task.title}`);
+    remove.addEventListener("click", () => { void mutateTask("delete", task); });
+    actions.append(remove);
+
+    row.append(icon, info, actions);
+    list.append(row);
+  }
+}
+
+function selectTaskFilter(filter) {
+  activeTaskFilter = filter;
+  document.querySelectorAll("[data-task-filter]").forEach((item) => {
+    const selected = item.dataset.taskFilter === filter;
+    item.classList.toggle("is-selected", selected);
+    item.setAttribute("aria-pressed", String(selected));
+  });
+  renderTasks();
+}
+
+async function refreshTasks() {
+  const requestNumber = ++latestTasksRequest;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+  setTasksStatus("Đang đồng bộ danh sách với SQLite...");
+
+  try {
+    const response = await fetch("/api/tasks/", {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    let data = null;
+    try { data = await response.json(); } catch (_) { /* Handle non-JSON errors below. */ }
+    if (!response.ok) throw new Error(httpErrorMessage(response.status, data));
+    if (!data || !Array.isArray(data.tasks)) throw new Error("API công việc trả dữ liệu không đúng định dạng.");
+
+    const parsed = data.tasks.map((item) => {
+      if (!item || !Number.isSafeInteger(item.id) || item.id <= 0 ||
+          typeof item.title !== "string" || typeof item.status !== "string" ||
+          typeof item.completed !== "boolean") {
+        throw new Error("Danh sách công việc có dữ liệu không hợp lệ.");
+      }
+      return { id: item.id, title: item.title, status: item.status, completed: item.completed };
+    });
+
+    if (requestNumber !== latestTasksRequest) return;
+    taskRows = parsed;
+    renderTasks();
+    setTasksStatus(`${taskRows.length} công việc được đồng bộ từ SQLite.`);
+  } catch (error) {
+    if (requestNumber !== latestTasksRequest) return;
+    setTasksStatus(error?.name === "AbortError"
+      ? "Tải danh sách quá thời gian chờ. Hãy thử lại."
+      : `Không tải được công việc: ${error?.message || "Lỗi kết nối"}`, true);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function mutateTask(action, task = null) {
+  if (taskMutationInFlight) return;
+
+  const creating = action === "create";
+  const title = creating ? $("#task-title").value.trim() : task?.title;
+  if (creating && (!title || title.length > 200)) {
+    setTasksStatus("Tên công việc phải có từ 1 đến 200 ký tự.", true);
+    return;
+  }
+  if (!creating && (!task || !Number.isSafeInteger(task.id) || task.id <= 0)) return;
+  if (action === "delete" && !window.confirm(`Bạn có chắc muốn xóa công việc “${title}” (ID ${task.id})?`)) return;
+
+  const url = creating ? "/api/tasks/" : action === "complete"
+    ? `/api/tasks/${task.id}/complete` : `/api/tasks/${task.id}`;
+  const method = creating ? "POST" : action === "complete" ? "PATCH" : "DELETE";
+  const label = creating ? `Đã tạo công việc: ${title}` : action === "complete"
+    ? `Đã hoàn thành: ${title}` : `Đã xóa công việc: ${title}`;
+  taskMutationInFlight = true;
+  $("#task-create-button").disabled = true;
+  setTasksStatus("Đang cập nhật SQLite...");
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: creating ? { "Content-Type": "application/json" } : undefined,
+      body: creating ? JSON.stringify({ title }) : undefined,
+    });
+    let data = null;
+    try { data = await response.json(); } catch (_) { /* API may return plain text on error. */ }
+    if (!response.ok) throw new Error(httpErrorMessage(response.status, data));
+    if (!data || (creating && !Number.isSafeInteger(data.id)) ||
+        (action === "complete" && data.completed !== true) ||
+        (action === "delete" && data.deleted !== true)) {
+      throw new Error("Máy chủ chưa xác nhận thao tác. Hãy làm mới để kiểm tra.");
+    }
+
+    if (creating) {
+      $("#task-title").value = "";
+      // The user should see the new pending task even if another filter was selected.
+      selectTaskFilter("all");
+    }
+    addActivity(label, true);
+    // The dashboard and list share one SQLite database and cost no AI tokens.
+    await Promise.all([refreshDashboard(), refreshTasks()]);
+  } catch (error) {
+    setTasksStatus(error?.message || "Không thể lưu thay đổi. Hãy thử lại.", true);
+    addActivity(`${label} (thất bại)`, false);
+  } finally {
+    taskMutationInFlight = false;
+    $("#task-create-button").disabled = false;
+  }
+}
+
 function addActivity(message, succeeded) {
   const container = $("#activity-feed");
   const empty = container.querySelector(".activity-empty");
@@ -275,6 +522,10 @@ async function sendMessage(message) {
     thinking.text.textContent = data.response.trim() || "AI không trả về nội dung văn bản.";
     renderUsage(data.usage);
     addActivity(trimmed, true);
+    // A chat tool may have created/completed/deleted a task in SQLite.
+    // Refreshing this read-only endpoint never calls the LLM.
+    void refreshDashboard();
+    if (!$("#tasks-section").hidden) void refreshTasks();
   } catch (error) {
     thinking.row.classList.remove("is-thinking");
     thinking.row.classList.add("is-error");
@@ -309,19 +560,32 @@ textarea.addEventListener("input", updateTextareaHeight);
 document.querySelectorAll("[data-prompt]").forEach((button) => {
   button.addEventListener("click", () => {
     if (button.classList.contains("nav-item")) {
-      document.querySelectorAll(".nav-item").forEach((item) => {
-        item.classList.remove("is-active");
-        item.removeAttribute("aria-current");
-      });
-      button.classList.add("is-active");
-      button.setAttribute("aria-current", "page");
+      showDashboard();
+      setActiveNav(button);
     }
     setPrompt(button.dataset.prompt || "");
   });
 });
 
+$("#open-tasks").addEventListener("click", () => showTaskManager());
+document.querySelectorAll("[data-open-tasks]").forEach((button) => {
+  button.addEventListener("click", () => showTaskManager(button.dataset.openTasks === "create"));
+});
+
+$("#tasks-refresh").addEventListener("click", () => { void refreshTasks(); void refreshDashboard(); });
+$("#task-create-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  void mutateTask("create");
+});
+document.querySelectorAll("[data-task-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    selectTaskFilter(button.dataset.taskFilter);
+  });
+});
+
 resetButton.addEventListener("click", () => {
   if (requestInFlight) return;
+  showDashboard();
   messageList.replaceChildren();
   welcome.hidden = false;
   textarea.value = "";
@@ -335,7 +599,11 @@ resetButton.addEventListener("click", () => {
   textarea.focus();
 });
 
-$("#refresh-status").addEventListener("click", () => { void checkHealth(); });
+$("#refresh-status").addEventListener("click", () => {
+  void checkHealth();
+  void refreshDashboard();
+  if (!$("#tasks-section").hidden) void refreshTasks();
+});
 insightsToggle.addEventListener("click", () => {
   setInsightsVisible(insightsToggle.getAttribute("aria-expanded") !== "true", true);
   if (insightsToggle.getAttribute("aria-expanded") === "true") {
@@ -352,6 +620,7 @@ $("#quick-search-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const input = $("#quick-search-input");
   if (!input.value.trim()) return;
+  showDashboard();
   setPrompt(input.value.trim());
   input.value = "";
 });
@@ -363,3 +632,4 @@ setText("#calendar-date", new Intl.DateTimeFormat("vi-VN", { weekday: "long", da
 setInsightsVisible(readInsightsPreference());
 updateTextareaHeight();
 void checkHealth();
+void refreshDashboard();

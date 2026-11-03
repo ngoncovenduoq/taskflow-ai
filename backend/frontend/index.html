@@ -25,7 +25,7 @@
           <button type="button" class="nav-item is-active" data-nav="assistant" data-prompt="" aria-current="page">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M8 10h8M8 14h5"/></svg><span>Dashboard</span>
           </button>
-          <button type="button" class="nav-item" data-nav="tasks" data-prompt="Hiển thị tất cả công việc của tôi.">
+          <button type="button" class="nav-item" data-nav="tasks" id="open-tasks" aria-controls="tasks-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>Công việc</span>
           </button>
           <button type="button" class="nav-item" data-nav="research" data-prompt="Hãy tìm trên Internet hai nguồn đáng tin cậy về lợi ích của RAG và cung cấp URL.">
@@ -69,14 +69,14 @@
         </header>
 
         <section class="overview" aria-label="Tổng quan công việc">
-          <div class="overview-card"><div class="overview-heading"><span class="overview-icon purple">▤</span><span>Tổng công việc</span></div><strong class="overview-value">—</strong><small>Thống kê sẽ được kết nối sau</small></div>
-          <div class="overview-card"><div class="overview-heading"><span class="overview-icon orange">◉</span><span>Đang thực hiện</span></div><strong class="overview-value">—</strong><small>Chưa có API tổng hợp</small></div>
-          <div class="overview-card"><div class="overview-heading"><span class="overview-icon green">✓</span><span>Đã hoàn thành</span></div><strong class="overview-value">—</strong><small>Chưa có API tổng hợp</small></div>
+          <div class="overview-card"><div class="overview-heading"><span class="overview-icon purple">▤</span><span>Tổng công việc</span></div><strong class="overview-value" id="total-tasks">—</strong><small id="total-tasks-note">Đang tải dữ liệu SQLite...</small></div>
+          <div class="overview-card"><div class="overview-heading"><span class="overview-icon orange">◉</span><span>Chưa hoàn thành</span></div><strong class="overview-value" id="unfinished-tasks">—</strong><small>Chưa được đánh dấu hoàn thành</small></div>
+          <div class="overview-card"><div class="overview-heading"><span class="overview-icon green">✓</span><span>Đã hoàn thành</span></div><strong class="overview-value" id="completed-tasks">—</strong><small>Đã đánh dấu hoàn thành</small></div>
           <div class="overview-card"><div class="overview-heading"><span class="overview-icon blue">✧</span><span>Token gần nhất</span></div><strong class="overview-value" id="last-tokens-overview">—</strong><small>Sau khi gửi một câu hỏi</small></div>
         </section>
 
         <section class="chat-section" aria-label="Hội thoại TaskFlow AI">
-          <div class="chat-panel-header"><div><span class="chat-panel-dot"></span> TaskFlow Assistant</div><span class="chat-panel-subtitle"></span></div>
+          <div class="chat-panel-header"><div><span class="chat-panel-dot"></span> TaskFlow Assistant</div><span class="chat-panel-subtitle">Đồng hành cùng công việc mỗi ngày</span></div>
           <div class="chat-scroll" id="chat-scroll">
             <div class="welcome" id="welcome">
               <div class="assistant-portrait" aria-label="Minh họa trợ lý AI">
@@ -108,8 +108,8 @@
           </div>
           <div class="composer-wrap">
             <div class="quick-prompts" aria-label="Lệnh nhanh">
-              <button type="button" data-prompt="Hiển thị tất cả công việc của tôi."><span>▤</span> Xem công việc</button>
-              <button type="button" data-prompt="Tạo công việc mới: Đọc và tóm tắt tài liệu PDF."><span>✎</span> Tạo công việc</button>
+              <button type="button" data-open-tasks="list"><span>▤</span> Xem công việc</button>
+              <button type="button" data-open-tasks="create"><span>✎</span> Tạo công việc</button>
               <button type="button" data-prompt="Lập kế hoạch làm việc cho hôm nay dựa trên các công việc hiện tại của tôi."><span>▣</span> Lập kế hoạch</button>
               <button type="button" data-prompt="Viết báo cáo ngắn bằng tiếng Việt về tiến độ công việc."><span>✧</span> Tạo báo cáo</button>
             </div>
@@ -119,6 +119,39 @@
               <div class="composer-footer"><span class="composer-hint">Enter để gửi · Shift + Enter xuống dòng</span><div class="composer-right"><span id="char-count" class="char-count">0 / 6000</span><button type="submit" id="send-button" class="send-button" aria-label="Gửi tin nhắn"><span>Gửi</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-4 16-4-7-8-1Z"/><path d="m12 13 8-9"/></svg></button></div></div>
             </form>
           </div>
+        </section>
+
+        <section class="tasks-section" id="tasks-section" aria-labelledby="tasks-title" hidden>
+          <div class="tasks-heading">
+            <div>
+              <span class="tasks-eyebrow">✦ &nbsp; QUẢN LÝ CÔNG VIỆC</span>
+              <h2 id="tasks-title">Công việc của Quân</h2>
+              <p>Thêm và theo dõi công việc trực tiếp trong SQLite, không cần gọi AI.</p>
+            </div>
+            <button type="button" class="tasks-refresh" id="tasks-refresh" aria-label="Tải lại công việc">↻ <span>Làm mới</span></button>
+          </div>
+
+          <form id="task-create-form" class="task-create-form" autocomplete="off">
+            <label for="task-title">Tạo công việc mới</label>
+            <div class="task-create-controls">
+              <input id="task-title" type="text" name="title" maxlength="200" required placeholder="Ví dụ: Ôn tập bài NLP tối nay..." />
+              <button type="submit" id="task-create-button">+ Thêm công việc</button>
+            </div>
+          </form>
+
+          <div class="tasks-list-toolbar">
+            <strong>Danh sách công việc</strong>
+            <div class="tasks-filters" role="group" aria-label="Lọc theo trạng thái">
+              <button type="button" data-task-filter="all" class="is-selected" aria-pressed="true">Tất cả</button>
+              <button type="button" data-task-filter="unfinished" aria-pressed="false">Chưa hoàn thành</button>
+              <button type="button" data-task-filter="completed" aria-pressed="false">Đã hoàn thành</button>
+            </div>
+          </div>
+          <p class="tasks-status" id="tasks-status" role="status" aria-live="polite">Đang tải danh sách công việc...</p>
+          <div class="tasks-list-scroll">
+            <ul class="task-list" id="task-list" aria-label="Danh sách công việc"></ul>
+          </div>
+          <p class="tasks-footnote">✓ Đánh dấu hoàn thành · 🗑 Xóa có xác nhận · Tất cả thao tác đều lưu vào SQLite.</p>
         </section>
       </main>
 
@@ -132,9 +165,9 @@
 
         <section class="right-card progress-card">
           <div class="right-card-title"><strong>◉ &nbsp; Tiến độ công việc</strong><span class="right-muted">Tổng quan</span></div>
-          <div class="progress-line"><span>Hoàn thành</span><strong>Chưa có dữ liệu</strong></div>
-          <div class="progress-track"><span style="width:0%"></span></div>
-          <p class="right-explain">Sẽ hiển thị tỷ lệ thực khi kết nối API thống kê task.</p>
+          <div class="progress-line"><span>Hoàn thành</span><strong id="progress-percent">—</strong></div>
+          <div class="progress-track"><span id="progress-fill" style="width:0%"></span></div>
+          <p class="right-explain" id="progress-detail">Đang tải tiến độ từ SQLite...</p>
         </section>
 
         <section class="right-card activity-card">

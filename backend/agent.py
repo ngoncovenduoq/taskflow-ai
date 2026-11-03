@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from langchain.tools import tool
 from langchain.agents import create_agent
 from langchain_openrouter import ChatOpenRouter
+from research_search import search_web
 
 from database import (
     init_db,
@@ -119,6 +120,30 @@ def search_pdf(question: str) -> str:
 
     return "\n\n".join(output)
 
+# Research Agent Tool
+@tool
+def web_research(query: str) -> str:
+    """Search the internet for current information and reliable sources."""
+
+    print(f"[RESEARCH AGENT] Searching web: {query}")
+
+    results = search_web(query)
+
+    if not results:
+        return "No web search results found."
+
+    output = []
+
+    for index, item in enumerate(results, start=1):
+
+        output.append(
+            f"Source {index}\n"
+            f"Title: {item['title']}\n"
+            f"URL: {item['url']}\n"
+            f"Content: {item['content']}"
+        )
+
+    return "\n\n".join(output)
 
 # 8. Kiem tra OpenRouter API key
 if not os.getenv("OPENROUTER_API_KEY"):
@@ -147,7 +172,8 @@ agent = create_agent(
         list_tasks,
         mark_task_completed,
         remove_task,
-        search_pdf
+        search_pdf,
+        web_research
     ],
     system_prompt=(
         "You are TaskFlow AI, a helpful AI assistant. "
@@ -184,6 +210,23 @@ agent = create_agent(
 
         "Ask for clarification if a task ID "
         "is missing or ambiguous. "
+
+        "For questions requiring current information or web research, "
+        "always use the web_research tool before answering. "
+
+        "Use the web search results to provide accurate answers. "
+
+        "When citing web sources, include the exact source URLs "
+        "returned by the web_research tool. "
+
+        "Never invent website URLs or citations. "
+
+        "If web search results are insufficient, "
+        "clearly state that you could not verify the information. "
+
+        "Use search_pdf for questions about uploaded PDF documents. "
+
+        "Use web_research for questions requiring internet information. "
 
         "Always respond in the user's language."
     )

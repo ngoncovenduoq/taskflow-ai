@@ -7,3 +7,4 @@ pypdf
 python-multipart
 chromadb
 langchain-openrouter==0.2.9
+tavily-python

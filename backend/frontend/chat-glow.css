@@ -27,9 +27,7 @@
 }
 
 .chat-profile-badge {
-  position: absolute;
-  top: 12px;
-  right: 22px;
+  position: static;
   width: 32px;
   height: 32px;
   display: grid;
@@ -42,6 +40,77 @@
   font-size: 13px;
   font-weight: 800;
 }
+
+.chat-header-actions {
+  position: absolute;
+  top: 11px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.chat-expand-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #d6d1f5;
+  border-radius: 11px;
+  background: #ffffffda;
+  color: #7968c9;
+  box-shadow: 0 3px 12px #978bc536;
+  transition: background .18s ease, border-color .18s ease;
+}
+.chat-expand-button:hover { background: #fff; border-color: #a392ef; }
+.chat-expand-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.chat-expand-button[aria-pressed="false"] .icon-compress,
+.chat-expand-button[aria-pressed="true"] .icon-expand { display: none; }
+
+/* Focus mode: the chat fills the viewport while its own messages scroll. */
+body.chat-expanded { overflow: hidden; }
+body.chat-expanded::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: #282b4c73;
+  backdrop-filter: blur(5px);
+}
+.chat-section.is-expanded {
+  position: fixed;
+  z-index: 999;
+  inset: 12px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border-radius: 23px;
+  box-shadow: 0 20px 75px #22234752;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.chat-section.is-expanded .chat-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.chat-section.is-expanded .messages { max-width: 1180px; }
+.chat-section.is-expanded .message-body { max-width: min(93%, 1050px); }
+.chat-section.is-expanded .composer-wrap { flex: 0 0 auto; }
+.chat-section.is-expanded .composer { max-width: 1180px; }
+.chat-section.is-expanded .chat-glow-header { flex: 0 0 auto; }
 
 .chat-section .chat-scroll {
   display: flex;
@@ -278,7 +347,10 @@
 
 @media (max-width: 760px) {
   .chat-glow-header { min-height: 46px; padding-top: 11px; }
-  .chat-profile-badge { top: 9px; right: 13px; width: 27px; height: 27px; font-size: 11px; }
+  .chat-header-actions { top: 8px; right: 12px; gap: 6px; }
+  .chat-profile-badge { width: 27px; height: 27px; font-size: 11px; }
+  .chat-expand-button { width: 30px; height: 30px; border-radius: 9px; }
+  .chat-section.is-expanded { inset: 0; border-radius: 0; }
   .chat-section .chat-glow-welcome { padding: 8px 8px; }
   .glow-orb { width: 64px; height: 64px; margin-bottom: 18px; }
   .chat-glow-welcome h2 { font-size: 24px; }

@@ -16,6 +16,8 @@ const charCount = $("#char-count");
 const formatter = new Intl.NumberFormat("vi-VN");
 const usagePanel = $("#usage-panel");
 const insightsToggle = $("#toggle-insights");
+const chatSizeToggle = $("#toggle-chat-size");
+const chatSection = $(".chat-section");
 const insightsStorageKey = "taskflow:token-panel-open-v3";
 const conversationStorageKey = "taskflow:active-conversation-v10";
 
@@ -33,6 +35,15 @@ let conversationNavigation = 0;
 let conversationsRequestVersion = 0;
 let storedConversations = [];
 let explicitlyStartedNewChat = false;
+
+function setChatExpanded(expanded) {
+  const show = expanded === true;
+  chatSection.classList.toggle("is-expanded", show);
+  document.body.classList.toggle("chat-expanded", show);
+  chatSizeToggle.setAttribute("aria-pressed", String(show));
+  chatSizeToggle.setAttribute("aria-label", show ? "Thu nhỏ khung chat" : "Phóng to khung chat");
+  chatSizeToggle.setAttribute("title", show ? "Thu nhỏ khung chat (Esc)" : "Phóng to khung chat");
+}
 
 function readInsightsPreference() {
   // Persist the UI choice only; chat content and prompts are never stored.
@@ -612,6 +623,7 @@ function showDashboard() {
 }
 
 function showTaskManager(focusInput = false) {
+  setChatExpanded(false);
   $("#tasks-section").hidden = false;
   $(".chat-section").hidden = true;
   setActiveNav($("#open-tasks"));
@@ -1295,6 +1307,15 @@ $("#tasks-sort").addEventListener("change", (event) => {
 });
 
 resetButton.addEventListener("click", startNewConversation);
+chatSizeToggle.addEventListener("click", () => {
+  setChatExpanded(chatSizeToggle.getAttribute("aria-pressed") !== "true");
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && chatSizeToggle.getAttribute("aria-pressed") === "true") {
+    setChatExpanded(false);
+    chatSizeToggle.focus();
+  }
+});
 
 $("#refresh-status").addEventListener("click", () => {
   void checkHealth();

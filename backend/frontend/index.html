@@ -87,7 +87,13 @@
         <section class="chat-section" aria-label="Hội thoại TaskFlow AI">
           <div class="chat-panel-header chat-glow-header">
             <div class="chat-glow-title">AI Assistant</div>
-            <span class="chat-profile-badge" aria-label="Quân, người dùng hiện tại">Q</span>
+            <div class="chat-header-actions">
+              <span class="chat-profile-badge" aria-label="Quân, người dùng hiện tại">Q</span>
+              <button type="button" id="toggle-chat-size" class="chat-expand-button" aria-label="Phóng to khung chat" aria-pressed="false" title="Phóng to khung chat">
+                <svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg>
+                <svg class="icon-compress" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h6V3M21 9h-6V3M3 15h6v6M21 15h-6v6"/></svg>
+              </button>
+            </div>
           </div>
           <div class="chat-scroll" id="chat-scroll">
             <div class="welcome chat-glow-welcome" id="welcome">

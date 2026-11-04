@@ -1,7 +1,7 @@
 "use strict";
 
 // This frontend uses only the existing FastAPI endpoints, on the same origin.
-// Chat messages are intentionally kept in memory, not localStorage.
+// Conversation text is stored by the local SQLite backend; localStorage holds only a selected ID.
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -17,6 +17,7 @@ const formatter = new Intl.NumberFormat("vi-VN");
 const usagePanel = $("#usage-panel");
 const insightsToggle = $("#toggle-insights");
 const insightsStorageKey = "taskflow:token-panel-open-v3";
+const conversationStorageKey = "taskflow:active-conversation-v10";
 
 let requestInFlight = false;
 let latestDashboardRequest = 0;
@@ -27,6 +28,11 @@ let activeTaskFilter = "all";
 let activePriorityFilter = "all";
 let activeTaskSort = "id";
 let editingTaskId = null;
+let activeConversationId = null;
+let conversationNavigation = 0;
+let conversationsRequestVersion = 0;
+let storedConversations = [];
+let explicitlyStartedNewChat = false;
 
 function readInsightsPreference() {
   // Persist the UI choice only; chat content and prompts are never stored.
@@ -310,6 +316,165 @@ function createMessage(role, message, options = {}) {
   messageList.append(row);
   scrollToLatest();
   return { row, text };
+}
+
+function rememberConversationId(id) {
+  try {
+    if (id === null) window.localStorage.removeItem(conversationStorageKey);
+    else window.localStorage.setItem(conversationStorageKey, String(id));
+  } catch (_) { /* Browsers may disable localStorage. */ }
+}
+
+function rememberedConversationId() {
+  try {
+    const id = Number(window.localStorage.getItem(conversationStorageKey));
+    return Number.isSafeInteger(id) && id > 0 ? id : null;
+  } catch (_) { return null; }
+}
+
+function renderConversationHistory() {
+  const list = $("#history-list");
+  list.replaceChildren();
+  for (const conversation of storedConversations) {
+    const row = document.createElement("li");
+    row.className = `history-item${conversation.id === activeConversationId ? " is-active" : ""}`;
+
+    const open = document.createElement("button");
+    open.type = "button";
+    open.className = "history-open";
+    open.textContent = conversation.title;
+    open.title = conversation.title;
+    open.setAttribute("aria-label", `Mở hội thoại: ${conversation.title}`);
+    open.addEventListener("click", () => { void openConversation(conversation.id); });
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "history-delete";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", `Xóa hội thoại: ${conversation.title}`);
+    remove.addEventListener("click", () => { void removeConversation(conversation.id, conversation.title); });
+    row.append(open, remove);
+    list.append(row);
+  }
+  setText("#history-status", storedConversations.length
+    ? `${storedConversations.length} cuộc trò chuyện gần đây`
+    : "Chưa có cuộc trò chuyện đã lưu.");
+}
+
+async function fetchConversationHistory(restore = false) {
+  const version = ++conversationsRequestVersion;
+  try {
+    const response = await fetch("/api/conversations/", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || !Array.isArray(data.conversations)) throw new Error("Danh sách hội thoại không hợp lệ.");
+    if (version !== conversationsRequestVersion) return;
+    storedConversations = data.conversations.filter((item) =>
+      Number.isSafeInteger(item.id) && item.id > 0 && typeof item.title === "string"
+    );
+    renderConversationHistory();
+    if (restore && storedConversations.length && !requestInFlight && !explicitlyStartedNewChat && $("#tasks-section").hidden) {
+      const preferred = rememberedConversationId();
+      const chosen = storedConversations.find((item) => item.id === preferred) || storedConversations[0];
+      await openConversation(chosen.id);
+    }
+  } catch (error) {
+    if (version !== conversationsRequestVersion) return;
+    setText("#history-status", `Không tải được lịch sử. Kiểm tra /api/conversations/ (${error?.message || "lỗi"}).`);
+  }
+}
+
+function clearCurrentChat() {
+  messageList.replaceChildren();
+  welcome.hidden = false;
+  textarea.value = "";
+  updateTextareaHeight();
+  renderUsage(null);
+  $("#activity-feed").replaceChildren();
+  const emptyActivity = document.createElement("div");
+  emptyActivity.className = "activity-empty";
+  emptyActivity.textContent = "Chưa có yêu cầu nào trong phiên này.";
+  $("#activity-feed").append(emptyActivity);
+}
+
+function startNewConversation() {
+  if (requestInFlight) return;
+  ++conversationNavigation; // Ignore a pending fetch of a previously selected chat.
+  explicitlyStartedNewChat = true;
+  activeConversationId = null;
+  rememberConversationId(null);
+  showDashboard();
+  clearCurrentChat();
+  renderConversationHistory();
+  textarea.focus();
+}
+
+async function openConversation(id) {
+  if (requestInFlight) return;
+  const version = ++conversationNavigation;
+  try {
+    const response = await fetch(`/api/conversations/${id}/messages`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data || !Array.isArray(data.messages)) throw new Error("Tin nhắn không hợp lệ.");
+    if (version !== conversationNavigation || requestInFlight) return;
+
+    activeConversationId = id;
+    explicitlyStartedNewChat = true;
+    rememberConversationId(id);
+    showDashboard();
+    clearCurrentChat();
+    for (const item of data.messages) {
+      if ((item.role === "user" || item.role === "assistant") && typeof item.content === "string") {
+        createMessage(item.role, item.content);
+      }
+    }
+    welcome.hidden = data.messages.length > 0;
+    renderConversationHistory();
+    scrollToLatest();
+  } catch (error) {
+    if (version === conversationNavigation) {
+      setText("#history-status", `Không mở được hội thoại: ${error?.message || "lỗi kết nối"}`);
+    }
+  }
+}
+
+async function removeConversation(id, title) {
+  if (requestInFlight) return;
+  if (!window.confirm(`Xóa vĩnh viễn hội thoại “${title}” và toàn bộ tin nhắn?`)) return;
+  ++conversationNavigation; // Prevent a pending read from reopening the deleted conversation.
+  try {
+    const response = await fetch(`/api/conversations/${id}`, { method: "DELETE" });
+    const data = await response.json();
+    if (!response.ok || data?.deleted !== true) throw new Error(`HTTP ${response.status}`);
+    if (id === activeConversationId) startNewConversation();
+    await fetchConversationHistory();
+  } catch (error) {
+    setText("#history-status", `Không xóa được hội thoại: ${error?.message || "lỗi kết nối"}`);
+  }
+}
+
+async function ensureActiveConversation() {
+  if (activeConversationId !== null) return activeConversationId;
+  const response = await fetch("/api/conversations/", { method: "POST" });
+  if (!response.ok) throw new Error("Không tạo được hội thoại. Kiểm tra router /api/conversations/.");
+  const data = await response.json();
+  if (!Number.isSafeInteger(data?.id) || data.id <= 0) throw new Error("API hội thoại trả ID không hợp lệ.");
+  activeConversationId = data.id;
+  explicitlyStartedNewChat = true;
+  rememberConversationId(data.id);
+  return data.id;
+}
+
+async function persistConversationMessage(id, role, content) {
+  const response = await fetch(`/api/conversations/${id}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role, content }),
+  });
+  if (!response.ok) throw new Error(`Không lưu được tin nhắn ${role} (HTTP ${response.status}).`);
+  const data = await response.json();
+  if (!Number.isSafeInteger(data?.id) || data.role !== role) throw new Error("SQLite chưa xác nhận lưu tin nhắn.");
 }
 
 function setLoading(busy) {
@@ -1005,7 +1170,13 @@ async function sendMessage(message) {
   const controller = new AbortController();
   // Client-side timeout does not guarantee cancellation of upstream model work.
   const timeout = setTimeout(() => controller.abort(), 120000);
+  let savedUserMessage = false;
   try {
+    // Persist the prompt before calling the paid model. A SQLite error stops the request.
+    const conversationId = await ensureActiveConversation();
+    await persistConversationMessage(conversationId, "user", trimmed);
+    savedUserMessage = true;
+
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1022,9 +1193,19 @@ async function sendMessage(message) {
 
     thinking.row.classList.remove("is-thinking");
     thinking.text.classList.add("is-markdown");
-    renderAssistantMarkdown(thinking.text, data.response.trim() || "AI không trả về nội dung văn bản.");
+    const assistantContent = data.response.trim() || "AI không trả về nội dung văn bản.";
+    renderAssistantMarkdown(thinking.text, assistantContent);
     renderUsage(data.usage);
     addActivity(trimmed, true);
+    try {
+      await persistConversationMessage(conversationId, "assistant", assistantContent);
+    } catch (saveError) {
+      // The model already replied; preserve the reply even if a second DB write fails.
+      const warning = document.createElement("div");
+      warning.className = "message-meta history-save-warning";
+      warning.textContent = `⚠ Phản hồi chưa được lưu vào lịch sử: ${saveError?.message || "lỗi SQLite"}`;
+      thinking.row.children[1].append(warning);
+    }
     // A chat tool may have created/completed/deleted a task in SQLite.
     // Refreshing this read-only endpoint never calls the LLM.
     void refreshDashboard();
@@ -1041,6 +1222,7 @@ async function sendMessage(message) {
   } finally {
     clearTimeout(timeout);
     setLoading(false);
+    if (savedUserMessage) void fetchConversationHistory();
     scrollToLatest();
     textarea.focus();
   }
@@ -1112,21 +1294,7 @@ $("#tasks-sort").addEventListener("change", (event) => {
   renderTasks();
 });
 
-resetButton.addEventListener("click", () => {
-  if (requestInFlight) return;
-  showDashboard();
-  messageList.replaceChildren();
-  welcome.hidden = false;
-  textarea.value = "";
-  updateTextareaHeight();
-  renderUsage(null);
-  $("#activity-feed").replaceChildren();
-  const emptyActivity = document.createElement("div");
-  emptyActivity.className = "activity-empty";
-  emptyActivity.textContent = "Chưa có yêu cầu nào trong phiên này.";
-  $("#activity-feed").append(emptyActivity);
-  textarea.focus();
-});
+resetButton.addEventListener("click", startNewConversation);
 
 $("#refresh-status").addEventListener("click", () => {
   void checkHealth();
@@ -1165,3 +1333,4 @@ updateTextareaHeight();
 void checkHealth();
 void refreshDashboard();
 void refreshTasks();
+void fetchConversationHistory(true);

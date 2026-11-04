@@ -328,3 +328,17 @@
 .message-text.is-markdown tr:nth-child(even) td { background: #fbfaff; }
 .message-text.is-markdown tr:last-child td { border-bottom: 0; }
 .message-text.is-markdown tr > :last-child { border-right: 0; }
+
+/* v10: compact, separately scrollable saved conversations in the sidebar. */
+.sidebar-conversations { display: flex; flex-direction: column; min-height: 0; max-height: min(32vh, 270px); margin: 12px 0 2px; }
+.sidebar-conversations h2 { flex-shrink: 0; margin: 2px 10px 8px; color: #6b7088; font-size: 10px; font-weight: 800; letter-spacing: .5px; }
+.history-status { flex-shrink: 0; margin: 0 10px 8px; font-size: 9px; line-height: 1.5; color: #9ca1b2; }
+.history-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; margin: 0; padding: 0 3px 3px; display: grid; align-content: start; gap: 5px; }
+.history-item { display: flex; align-items: center; gap: 4px; min-width: 0; border-radius: 10px; }
+.history-item.is-active { background: #eae3fd; }
+.history-open { flex: 1 1 auto; min-width: 0; padding: 9px 8px; border: none; background: transparent; color: #697086; text-align: left; border-radius: 10px; font-size: 10px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-item.is-active .history-open { color: #6354a6; }
+.history-open:hover { color: #5549a9; background: #e9e6f7; }
+.history-delete { flex: 0 0 25px; height: 27px; border: 0; border-radius: 7px; background: transparent; color: #9da2b2; font-size: 17px; line-height: 1; }
+.history-delete:hover { color: #bd506a; background: #ffe5ea; }
+.history-open:focus-visible, .history-delete:focus-visible { outline: 2px solid #9785ee; outline-offset: 1px; }

@@ -10,6 +10,7 @@ from api_errors import to_http_exception, upstream_status
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from task_api import router as task_router
+from conversation_api import router as conversation_router
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ app = FastAPI(
 app.include_router(dashboard_router)
 app.include_router(document_router)
 app.include_router(task_router)
+app.include_router(conversation_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 

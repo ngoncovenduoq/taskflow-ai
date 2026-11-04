@@ -1,0 +1,117 @@
+/* TaskFlow PDF library, scoped to the workspace and pastel chat composer. */
+.documents-section {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 13px 13px;
+  padding: 22px 25px 15px;
+  /* Scroll the entire PDF panel, including its heading and upload form.
+     A nested, short list scroller can clip the first/last document card. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b7b1d1 transparent;
+  scrollbar-gutter: stable;
+  border: 1px solid #e5e6f1;
+  border-radius: 27px;
+  background: radial-gradient(ellipse at 100% 0%, #e8dcffb3, transparent 56%), #ebedf2;
+}
+.documents-section[hidden], .selected-pdf-banner[hidden] { display: none !important; }
+.documents-heading { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-shrink: 0; }
+.documents-heading h2 { font-size: 21px; letter-spacing: -.45px; color: #35374a; margin: 7px 0 4px; }
+.documents-heading p { font-size: 11px; line-height: 1.6; color: #9199a9; margin: 0; }
+.document-upload-form {
+  display: grid;
+  gap: 11px;
+  flex-shrink: 0;
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #e7e7f0;
+  box-shadow: 0 3px 13px #aeb4c014;
+}
+.document-upload-form label { font-size: 12px; font-weight: 750; color: #41465a; }
+.document-upload-form label small { display: block; font-size: 10px; font-weight: 500; color: #9da5b3; margin-top: 5px; }
+.document-upload-controls { display: flex; gap: 9px; min-width: 0; }
+.document-upload-controls input { flex: 1; min-width: 0; font-size: 11px; padding: 10px; background: #f8f9fc; border: 1px solid #e7e9f2; border-radius: 11px; }
+.document-upload-controls input::file-selector-button { border: 0; background: #edeaff; color: #7466bf; border-radius: 8px; padding: 7px 10px; margin-right: 10px; cursor: pointer; }
+.document-upload-controls button, .document-ask-button {
+  flex-shrink: 0;
+  border: 0;
+  background: linear-gradient(110deg, #85a8f2, #b893e6);
+  color: #fff;
+  border-radius: 11px;
+  padding: 10px 13px;
+  font-size: 11px;
+  font-weight: 750;
+}
+.document-upload-controls button:hover:enabled, .document-ask-button:hover:enabled { filter: brightness(.97); }
+.documents-status { font-size: 11px; line-height: 1.5; margin: 18px 0 10px; color: #828da4; flex-shrink: 0; }
+.documents-status.is-error { color: #b44a64; }
+.documents-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  border: 1px solid #ddd5f8;
+  border-radius: 14px;
+  background: #ffffffd9;
+  color: #706c9d;
+  font-size: 11px;
+  font-weight: 650;
+}
+.documents-selection-bar[hidden] { display: none !important; }
+.documents-selection-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.documents-selection-actions button {
+  border: 1px solid #d8d1f2;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fff;
+  color: #7669b0;
+  font-size: 10px;
+  font-weight: 750;
+}
+#documents-ask-selected { background: linear-gradient(105deg, #84a6ee, #b78ee4); color: #fff; border-color: transparent; }
+#documents-ask-selected:disabled { opacity: .48; cursor: not-allowed; }
+.document-select-label { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 10px; font-weight: 650; color: #7466ad; cursor: pointer; }
+.document-select-label input { width: 15px; height: 15px; accent-color: #9176df; cursor: pointer; }
+.documents-list-scroll {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 0 2px 12px 0;
+}
+.document-list { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.document-list-item { display: flex; align-items: center; gap: 13px; padding: 16px; min-width: 0; border-radius: 16px; background: #fff; border: 1px solid #e9eaf3; }
+.document-file-icon { flex-shrink: 0; display: grid; place-items: center; width: 41px; height: 45px; border-radius: 12px; background: #f0ebff; color: #8769cf; font-size: 13px; font-weight: 800; }
+.document-info { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.document-info strong { font-size: 12px; overflow-wrap: anywhere; color: #3a4056; }
+.document-info small { font-size: 10px; color: #929cad; }
+.document-info .document-indexed { color: #37a66d; }
+.document-info .document-pending { color: #ad6b27; }
+.document-row-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.document-row-actions button:not(.document-ask-button) { padding: 9px 10px; border-radius: 10px; border: 1px solid #e8e9f2; background: #fafaff; color: #737b95; font-size: 10px; font-weight: 700; }
+.document-row-actions .document-delete:hover { border-color: #f0bdc8; color: #b44a64; background: #fff1f4; }
+.document-empty { padding: 44px 15px; text-align: center; color: #9299a9; font-size: 12px; border: 1px dashed #cacde0; border-radius: 15px; background: #ffffffa8; }
+.documents-footnote { flex-shrink: 0; color: #929aaf; font-size: 10px; line-height: 1.5; margin: 10px 0 0; padding-bottom: 5px; }
+.selected-pdf-banner { display: flex; align-items: center; justify-content: center; gap: 9px; width: fit-content; max-width: 100%; margin: 0 auto 8px; padding: 6px 10px; border-radius: 12px; background: #fffefaeb; color: #6f64a1; border: 1px solid #cdc3f0; font-size: 11px; }
+.selected-pdf-banner > span:nth-child(2) { min-width: 0; overflow-wrap: anywhere; }
+.selected-pdf-banner strong { overflow-wrap: anywhere; }
+.selected-pdf-banner button { background: transparent; border: 0; color: #806cb9; font-size: 20px; line-height: 1; padding: 0 2px; }
+
+@media (max-width: 760px) {
+  .documents-section { min-height: 430px; height: min(670px, 80dvh); margin: 0 9px 12px; padding: 16px 12px; }
+  .documents-heading h2 { font-size: 17px; }
+  .document-upload-controls { flex-wrap: wrap; }
+  .document-upload-controls input, .document-upload-controls button { width: 100%; }
+  .document-list-item { align-items: flex-start; flex-wrap: wrap; }
+  .document-row-actions { width: 100%; justify-content: flex-start; }
+  .documents-selection-actions { width: 100%; }
+}

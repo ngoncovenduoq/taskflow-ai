@@ -1,0 +1,96 @@
+/* A dedicated, independently scrolling drafting workspace. */
+.writing-section {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 13px 13px;
+  padding: 22px 25px 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b2a9d8 transparent;
+  border: 1px solid #e1e4f0;
+  border-radius: 27px;
+  background: radial-gradient(ellipse at 95% 0, #efe0fc 0, transparent 58%), #ecedf5;
+}
+.writing-section[hidden], .writing-editor[hidden] { display: none !important; }
+.writing-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.writing-heading h2 { margin: 7px 0 4px; color: #353850; font-size: 21px; }
+.writing-heading p { margin: 0; color: #8995aa; font-size: 11px; line-height: 1.6; }
+.writing-heading-actions { display: flex; align-items: center; flex-shrink: 0; gap: 9px; }
+.writing-heading-actions .chat-expand-button { flex: 0 0 34px; cursor: pointer; }
+.writing-heading-actions .chat-expand-button:focus-visible { outline: 3px solid #9d86ec; outline-offset: 2px; }
+
+body.writing-expanded { overflow: hidden; }
+body.writing-expanded::before { content: ""; position: fixed; inset: 0; z-index: 998; background: #282b4c73; backdrop-filter: blur(5px); }
+.writing-section.is-expanded {
+  position: fixed; z-index: 999; inset: 12px; width: auto; height: auto; max-width: none;
+  min-height: 0; margin: 0; border-radius: 23px; overflow-y: auto;
+  box-shadow: 0 20px 75px #22234752;
+}
+.writing-section.is-expanded .writing-heading {
+  position: sticky; top: -22px; z-index: 2; margin: -22px -25px 0;
+  padding: 20px 25px 16px; border-bottom: 1px solid #dedcf1;
+  background: #f3f0fbed; backdrop-filter: blur(12px);
+}
+
+.writing-form, .writing-editor, .writing-history {
+  margin-top: 17px; padding: 18px; border: 1px solid #e8e8f0; border-radius: 19px;
+  background: #fff; box-shadow: 0 4px 15px #a6adc015;
+}
+.writing-form { display: grid; gap: 10px; }
+.writing-form label, .writing-editor > label { display: grid; gap: 7px; font-size: 12px; font-weight: 750; color: #424963; }
+.writing-field-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.writing-form select, .writing-form textarea, .writing-editor input, .writing-editor textarea, .writing-editor select {
+  display: block; width: 100%; min-width: 0; box-sizing: border-box;
+  padding: 11px 12px; border: 1px solid #e3e5f0; border-radius: 12px;
+  color: #3e4661; background: #f9fafe; font: inherit; font-size: 12px;
+}
+.writing-form textarea, .writing-editor textarea { resize: vertical; line-height: 1.65; }
+.writing-form textarea:focus, .writing-editor textarea:focus, .writing-editor input:focus,
+.writing-form select:focus, .writing-editor select:focus { outline: 2px solid #b8a6f4; outline-offset: 1px; }
+.writing-form-footer, .writing-editor-actions, .writing-export-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.writing-form-footer span { font-size: 10px; color: #929bad; line-height: 1.6; }
+.writing-form-footer button, .writing-save-button { border: 0; border-radius: 11px; padding: 11px 16px; background: linear-gradient(110deg,#819fee,#ad8fe7); color: #fff; font-size: 11px; font-weight: 750; cursor: pointer; }
+.writing-form-footer button:disabled, .writing-editor-actions button:disabled { opacity: .55; cursor: wait; }
+.writing-status { margin: 12px 3px 0; min-height: 16px; color: #7788a4; font-size: 11px; line-height: 1.6; }
+.writing-status.is-error { color: #ad4e6a; }
+.writing-editor { display: grid; gap: 10px; }
+.writing-editor-heading { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #ececf4; }
+.writing-editor-heading strong { font-size: 13px; color: #353f5f; }
+.writing-editor-heading span { font-size: 10px; color: #949db2; }
+.writing-editor textarea { min-height: 230px; font-family: inherit; }
+.writing-section.is-expanded .writing-editor textarea { min-height: 350px; }
+.writing-editor-meta { display: flex; justify-content: space-between; gap: 10px; color: #97a0b3; font-size: 10px; }
+.writing-editor-meta .is-dirty { color: #b17032; font-weight: 750; }
+.writing-editor-actions { justify-content: flex-start; border-top: 1px solid #efedf6; padding-top: 13px; }
+.writing-editor-actions select { width: auto; min-width: 120px; }
+.writing-inline-label { font-size: 11px; color: #6b7392; }
+#writing-revise-button { padding: 10px 14px; border: 1px solid #d8d4ed; border-radius: 11px; color: #7468b2; background: #f7f4ff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.writing-export-row { justify-content: flex-start; padding-top: 12px; border-top: 1px solid #efedf6; }
+.writing-export-row span { font-size: 10px; color: #969db2; }
+.writing-export-row a { padding: 9px 14px; border: 1px solid #deddf1; border-radius: 10px; color: #6664b2; background: #f9f7ff; font-size: 11px; font-weight: 700; text-decoration: none; }
+.writing-export-row a:hover { border-color: #9c94df; background: #f1eeff; }
+.writing-history h3 { margin: 0 0 12px; color: #444a64; font-size: 12px; }
+.writing-history h3 span { color: #939db5; font-size: 10px; font-weight: 400; }
+.writing-history ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.writing-history-item { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid #eceaf4; border-radius: 12px; background: #fafaff; }
+.writing-history-item > div:first-child { min-width: 0; display: grid; gap: 4px; }
+.writing-history-item strong { color: #505b76; font-size: 11px; overflow-wrap: anywhere; }
+.writing-history-item small { color: #9ba3b5; font-size: 10px; }
+.writing-history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.writing-history-actions button { padding: 8px 10px; border: 1px solid #dcdaf0; border-radius: 9px; background: white; color: #7371a6; font-size: 10px; cursor: pointer; }
+.writing-history-actions button:hover { background: #f1eeff; }
+.writing-history-empty { padding: 16px; text-align: center; font-size: 11px; color: #9ba4b6; }
+
+@media (max-width: 760px) {
+  .writing-section { min-height: 490px; height: min(760px, 84dvh); margin: 0 9px 12px; padding: 16px 12px; }
+  .writing-section.is-expanded { inset: 0; min-height: 0; height: auto; border-radius: 0; }
+  .writing-section.is-expanded .writing-heading { top: -16px; margin: -16px -12px 0; padding: 16px 12px 12px; }
+  .writing-heading h2 { font-size: 17px; }
+  .writing-heading-actions { flex-wrap: wrap; justify-content: flex-end; }
+  .writing-field-row { grid-template-columns: 1fr; }
+  .writing-form-footer button { width: 100%; }
+  .writing-history-item { flex-direction: column; align-items: flex-start; }
+}

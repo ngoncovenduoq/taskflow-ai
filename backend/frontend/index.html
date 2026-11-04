@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="./chat-glow.css" />
     <link rel="stylesheet" href="./task-advanced.css" />
     <link rel="stylesheet" href="./calendar-deadlines.css" />
+    <link rel="stylesheet" href="./document-library.css" />
+    <link rel="stylesheet" href="./research.css" />
+    <link rel="stylesheet" href="./writing.css" />
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -31,13 +34,13 @@
           <button type="button" class="nav-item" data-nav="tasks" id="open-tasks" aria-controls="tasks-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg><span>Công việc</span>
           </button>
-          <button type="button" class="nav-item" data-nav="research" data-prompt="Hãy tìm trên Internet hai nguồn đáng tin cậy về lợi ích của RAG và cung cấp URL.">
+          <button type="button" class="nav-item" data-nav="research" id="open-research" aria-controls="research-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><span>Nghiên cứu</span>
           </button>
-          <button type="button" class="nav-item" data-nav="writing" data-prompt="Viết email ứng tuyển AI Engineer Intern bằng tiếng Việt, giọng văn chuyên nghiệp và không bịa kinh nghiệm.">
+          <button type="button" class="nav-item" data-nav="writing" id="open-writing" aria-controls="writing-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19h14M7 15l10-10 3 3-10 10-4 1 1-4Z"/></svg><span>Soạn thảo</span>
           </button>
-          <button type="button" class="nav-item" data-nav="documents" data-prompt="Tóm tắt tài liệu PDF đã được tải lên và trích dẫn tên file, số trang.">
+          <button type="button" class="nav-item" data-nav="documents" id="open-documents" aria-controls="documents-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h6"/></svg><span>Tài liệu PDF</span>
           </button>
           <button type="button" class="nav-item" id="nav-usage">
@@ -105,6 +108,11 @@
             <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
           </div>
           <div class="composer-wrap">
+            <div id="selected-pdf-banner" class="selected-pdf-banner" hidden>
+              <span aria-hidden="true">▤</span>
+              <span>Đang hỏi về: <strong id="selected-pdf-name"></strong></span>
+              <button type="button" id="clear-selected-pdf" aria-label="Bỏ chọn tài liệu PDF" title="Bỏ chọn tài liệu">×</button>
+            </div>
             <div class="quick-prompts" aria-label="Lệnh nhanh">
               <button type="button" data-open-tasks="list"><span>▤</span> Xem công việc</button>
               <button type="button" data-open-tasks="create"><span>✎</span> Tạo công việc</button>
@@ -188,6 +196,141 @@
             <ul class="task-list" id="task-list" aria-label="Danh sách công việc"></ul>
           </div>
           <p class="tasks-footnote">✎ Sửa nội dung · ↶ Mở lại công việc · 🗑 Xóa có xác nhận · Tất cả thay đổi lưu trong SQLite.</p>
+        </section>
+
+        <section class="documents-section" id="documents-section" aria-labelledby="documents-title" hidden>
+          <div class="documents-heading">
+            <div>
+              <span class="tasks-eyebrow">✦ &nbsp; THƯ VIỆN TÀI LIỆU</span>
+              <h2 id="documents-title">Tài liệu PDF của Quân</h2>
+              <p>Tải tài liệu lên, lập chỉ mục và chọn chính xác PDF để hỏi AI.</p>
+            </div>
+            <button type="button" id="documents-refresh" class="tasks-refresh" title="Tải lại thư viện">↻ <span>Làm mới</span></button>
+          </div>
+          <form id="document-upload-form" class="document-upload-form" autocomplete="off">
+            <label for="document-file">Tải lên PDF mới <small>Tối đa 5 MB · PDF có văn bản (chưa hỗ trợ bản scan)</small></label>
+            <div class="document-upload-controls">
+              <input id="document-file" type="file" accept=".pdf,application/pdf" required />
+              <button id="document-upload-button" type="submit">↑ Tải lên & lập chỉ mục</button>
+            </div>
+          </form>
+          <p id="document-status" class="documents-status" role="status" aria-live="polite">Mở thư viện để xem tài liệu đã tải.</p>
+          <div id="documents-selection-bar" class="documents-selection-bar" hidden>
+            <span id="documents-selected-count">Chưa chọn tài liệu.</span>
+            <div class="documents-selection-actions">
+              <button type="button" id="documents-ask-selected" disabled>✦ Hỏi AI về các PDF đã chọn</button>
+              <button type="button" id="documents-clear-selection">Bỏ chọn</button>
+            </div>
+          </div>
+          <div class="documents-list-scroll">
+            <ul id="document-list" class="document-list" aria-label="Danh sách PDF đã tải"></ul>
+          </div>
+          <p class="documents-footnote">Nhấn “Hỏi AI” để hỏi một tài liệu, hoặc đánh dấu 2–5 PDF rồi nhấn “Hỏi AI về các PDF đã chọn”. Xóa tài liệu sẽ xóa cả nội dung đã lưu và chỉ mục tìm kiếm.</p>
+        </section>
+
+        <section class="research-section" id="research-section" aria-labelledby="research-title" hidden>
+          <div class="research-heading">
+            <div>
+              <span class="tasks-eyebrow">✦ &nbsp; KHÔNG GIAN NGHIÊN CỨU</span>
+              <h2 id="research-title">Nghiên cứu cùng TaskFlow AI</h2>
+              <p>Tìm nguồn Internet, tổng hợp nội dung có dẫn chứng và lưu lại để xem sau.</p>
+            </div>
+            <div class="research-heading-actions">
+              <button type="button" class="tasks-refresh" id="research-refresh">↻ <span>Làm mới</span></button>
+              <button type="button" id="toggle-research-size" class="chat-expand-button" aria-label="Phóng to khung nghiên cứu" aria-pressed="false" title="Phóng to khung nghiên cứu">
+                <svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg>
+                <svg class="icon-compress" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h6V3M21 9h-6V3M3 15h6v6M21 15h-6v6"/></svg>
+              </button>
+            </div>
+          </div>
+          <form id="research-form" class="research-form" autocomplete="off">
+            <label for="research-query">Bạn muốn tìm hiểu chủ đề gì?</label>
+            <textarea id="research-query" minlength="3" maxlength="400" rows="3" required placeholder="Ví dụ: Những phương pháp RAG mới trong NLP và các nguồn nghiên cứu đáng tin cậy..."></textarea>
+            <div class="research-form-bottom">
+              <span>Tìm kiếm web và tổng hợp AI có thể sử dụng dịch vụ trả phí.</span>
+              <button id="research-submit" type="submit">✦ Tìm & tổng hợp nguồn</button>
+            </div>
+          </form>
+          <p id="research-status" class="research-status" role="status" aria-live="polite">Nhập câu hỏi hoặc mở một nghiên cứu đã lưu.</p>
+          <div id="research-result" class="research-result" hidden>
+            <div class="research-card-heading"><h3 id="research-result-title">Kết quả nghiên cứu</h3><small id="research-result-date"></small></div>
+            <div id="research-summary" class="research-summary is-markdown"></div>
+            <h3 class="research-sources-heading">Nguồn tham khảo <span id="research-source-count"></span></h3>
+            <ul id="research-sources" class="research-sources" aria-label="Các nguồn nghiên cứu"></ul>
+          </div>
+          <div class="research-history">
+            <h3>Lịch sử nghiên cứu <span id="research-history-count"></span></h3>
+            <ul id="research-history-list" aria-label="Nghiên cứu đã lưu"></ul>
+          </div>
+        </section>
+        <section class="writing-section" id="writing-section" aria-labelledby="writing-title" hidden>
+          <div class="writing-heading">
+            <div>
+              <span class="tasks-eyebrow">✦ &nbsp; XƯỞNG SOẠN THẢO</span>
+              <h2 id="writing-title">Soạn thảo cùng TaskFlow AI</h2>
+              <p>Tạo bản nháp, chỉnh sửa, lưu trong SQLite và xuất tài liệu khi đã sẵn sàng.</p>
+            </div>
+            <div class="writing-heading-actions">
+              <button type="button" class="tasks-refresh" id="writing-refresh">↻ <span>Làm mới</span></button>
+              <button type="button" id="toggle-writing-size" class="chat-expand-button" aria-label="Phóng to khung soạn thảo" aria-pressed="false" title="Phóng to khung soạn thảo">
+                <svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg>
+                <svg class="icon-compress" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h6V3M21 9h-6V3M3 15h6v6M21 15h-6v6"/></svg>
+              </button>
+            </div>
+          </div>
+          <form class="writing-form" id="writing-generate-form" autocomplete="off">
+            <div class="writing-field-row">
+              <label>Loại nội dung
+                <select id="writing-kind">
+                  <option value="email">Email</option><option value="report">Báo cáo</option>
+                  <option value="essay">Bài luận</option><option value="cv">CV</option>
+                  <option value="custom">Nội dung khác</option>
+                </select>
+              </label>
+              <label>Giọng văn
+                <select id="writing-tone">
+                  <option value="professional">Chuyên nghiệp</option><option value="academic">Học thuật</option>
+                  <option value="friendly">Thân thiện</option><option value="neutral">Trung lập</option>
+                </select>
+              </label>
+            </div>
+            <label for="writing-instructions">Yêu cầu soạn thảo</label>
+            <textarea id="writing-instructions" minlength="5" maxlength="4000" required rows="3" placeholder="Ví dụ: Viết email ứng tuyển AI Intern. Tôi là sinh viên năm cuối, đã học Python và PyTorch. Đừng bịa kinh nghiệm."></textarea>
+            <div class="writing-form-footer">
+              <span>Chỉ gọi AI khi bạn bấm tạo hoặc chỉnh sửa. Có thể phát sinh chi phí token.</span>
+              <button id="writing-generate-button" type="submit">✦ Tạo bản thảo</button>
+            </div>
+          </form>
+          <p class="writing-status" id="writing-status" role="status" aria-live="polite">Tạo bản thảo mới hoặc mở bản đã lưu bên dưới.</p>
+          <section class="writing-editor" id="writing-editor" aria-label="Trình chỉnh sửa bản thảo" hidden>
+            <div class="writing-editor-heading">
+              <strong>Trình chỉnh sửa</strong><span id="writing-current-id">Chưa chọn bản thảo</span>
+            </div>
+            <label for="writing-draft-title">Tiêu đề</label>
+            <input id="writing-draft-title" type="text" maxlength="160" />
+            <label for="writing-draft-content">Nội dung (có thể chỉnh sửa trực tiếp)</label>
+            <textarea id="writing-draft-content" rows="14" maxlength="30000" spellcheck="true"></textarea>
+            <div class="writing-editor-meta"><span id="writing-char-count">0 ký tự</span><span id="writing-save-state">Đã lưu</span></div>
+            <div class="writing-editor-actions">
+              <button type="button" id="writing-save-button" class="writing-save-button">✓ Lưu thay đổi</button>
+              <label for="writing-action" class="writing-inline-label">AI chỉnh sửa</label>
+              <select id="writing-action">
+                <option value="rewrite">Viết lại</option><option value="shorten">Rút gọn</option>
+                <option value="expand">Mở rộng</option><option value="proofread">Sửa chính tả</option>
+              </select>
+              <button type="button" id="writing-revise-button">✦ Áp dụng AI</button>
+            </div>
+            <div class="writing-export-row">
+              <span>Xuất bản đã lưu:</span>
+              <a id="writing-export-txt" href="#" download>TXT</a>
+              <a id="writing-export-docx" href="#" download>DOCX</a>
+              <a id="writing-export-pdf" href="#" download>PDF</a>
+            </div>
+          </section>
+          <section class="writing-history" aria-label="Lịch sử soạn thảo">
+            <h3>Lịch sử bản thảo <span id="writing-history-count"></span></h3>
+            <ul id="writing-history-list"></ul>
+          </section>
         </section>
       </main>
 

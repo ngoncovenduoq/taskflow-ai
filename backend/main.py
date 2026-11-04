@@ -14,6 +14,8 @@ from task_api import router as task_router
 from conversation_api import router as conversation_router
 from research_api import router as research_router
 from writing_api import router as writing_router
+from analytics_api import router as analytics_router
+from usage_history import record_usage_safely
 from chat_history import asks_about_prior_chat, get_recent_conversation_context
 from rag_store import list_documents
 
@@ -30,6 +32,7 @@ app.include_router(task_router)
 app.include_router(conversation_router)
 app.include_router(research_router)
 app.include_router(writing_router)
+app.include_router(analytics_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 
@@ -122,9 +125,13 @@ def chat(request: ChatRequest):
                 if not document["indexed"]:
                     raise HTTPException(status_code=409, detail=f"PDF chưa lập chỉ mục: {document['filename']}.")
             if len(selected_ids) == 1:
-                return ask_pdf_with_usage(request.message, selected_ids[0], history=history)
-            return ask_pdfs_with_usage(request.message, selected_ids, history=history)
-        return ask_agent_with_usage(request.message, history=history)
+                result = ask_pdf_with_usage(request.message, selected_ids[0], history=history)
+            else:
+                result = ask_pdfs_with_usage(request.message, selected_ids, history=history)
+        else:
+            result = ask_agent_with_usage(request.message, history=history)
+        record_usage_safely(result.get("usage"))
+        return result
 
     except HTTPException:
         raise

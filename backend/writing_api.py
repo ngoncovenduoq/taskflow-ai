@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, field_validator
 from agent import model
 from supervisor import extract_agent_response
 from usage_tracker import summarize_usage
+from usage_history import record_usage_safely
 from writing_export import export_docx, export_pdf, export_txt
 from writing_store import create_draft, delete_draft, get_draft, init_writing_db, list_drafts, update_draft
 
@@ -82,6 +83,7 @@ def _invoke_writing_model(messages: list[dict]):
             raise ValueError("Model returned empty or oversized content")
         usage = summarize_usage(callback.usage_metadata)
         usage["route"] = "writing"
+        record_usage_safely(usage)
         return result, usage
     except Exception as error:
         logger.error("Writing model failure: type=%s", type(error).__name__)

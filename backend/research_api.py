@@ -14,6 +14,7 @@ from research_search import search_web
 from research_store import delete_research, init_research_db, list_research, save_research
 from supervisor import extract_agent_response
 from usage_tracker import summarize_usage
+from usage_history import record_usage_safely
 
 
 router = APIRouter(prefix="/api/research", tags=["Research"])
@@ -94,6 +95,7 @@ def create_research(payload: ResearchRequest):
             summary_available = bool(summary)
             if not summary_available:
                 summary = "Đã tìm được nguồn tham khảo, nhưng AI trả về nội dung rỗng. Hãy mở từng nguồn bên dưới."
+            record_usage_safely(usage)
         except Exception as error:
             logger.error("Research summary failed: type=%s", type(error).__name__)
             summary = "Đã tìm được nguồn tham khảo, nhưng AI chưa tổng hợp được. Bạn vẫn có thể mở từng nguồn bên dưới."

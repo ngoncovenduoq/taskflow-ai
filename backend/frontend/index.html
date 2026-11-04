@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="./document-library.css" />
     <link rel="stylesheet" href="./research.css" />
     <link rel="stylesheet" href="./writing.css" />
+    <link rel="stylesheet" href="./analytics.css" />
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -43,7 +44,7 @@
           <button type="button" class="nav-item" data-nav="documents" id="open-documents" aria-controls="documents-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h6"/></svg><span>Tài liệu PDF</span>
           </button>
-          <button type="button" class="nav-item" id="nav-usage">
+          <button type="button" class="nav-item" id="nav-usage" aria-controls="analytics-section">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16M9 16v-5M14 16V7M19 16V9"/></svg><span>Phân tích AI</span><span class="nav-mini-dot" aria-hidden="true"></span>
           </button>
         </nav>
@@ -331,6 +332,53 @@
             <h3>Lịch sử bản thảo <span id="writing-history-count"></span></h3>
             <ul id="writing-history-list"></ul>
           </section>
+        </section>
+        <section class="analytics-section" id="analytics-section" aria-labelledby="analytics-title" hidden>
+          <div class="analytics-heading">
+            <div>
+              <span class="tasks-eyebrow">✦ &nbsp; THỐNG KÊ SỬ DỤNG AI</span>
+              <h2 id="analytics-title">Phân tích AI</h2>
+              <p>Token, chi phí ước tính và lịch sử lượt gọi AI được lưu trong SQLite.</p>
+            </div>
+            <div class="analytics-heading-actions">
+              <button type="button" class="tasks-refresh" id="analytics-refresh">↻ <span>Làm mới</span></button>
+              <button type="button" id="toggle-analytics-size" class="chat-expand-button" aria-label="Phóng to khung phân tích" aria-pressed="false" title="Phóng to khung phân tích">
+                <svg class="icon-expand" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg>
+                <svg class="icon-compress" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h6V3M21 9h-6V3M3 15h6v6M21 15h-6v6"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="analytics-period" role="group" aria-label="Khoảng thời gian phân tích">
+            <button type="button" data-analytics-period="day" aria-pressed="false">Hôm nay</button>
+            <button type="button" data-analytics-period="week" aria-pressed="true">Tuần này</button>
+            <button type="button" data-analytics-period="month" aria-pressed="false">Tháng này</button>
+          </div>
+          <p id="analytics-status" class="analytics-status" role="status" aria-live="polite">Chọn khoảng thời gian để xem số liệu.</p>
+          <div class="analytics-kpi-grid">
+            <div class="analytics-kpi"><span>Lượt gọi AI</span><strong id="analytics-calls">—</strong><small>Tổng yêu cầu đã ghi nhận</small></div>
+            <div class="analytics-kpi"><span>Tổng token</span><strong id="analytics-tokens">—</strong><small>Theo số liệu model trả về</small></div>
+            <div class="analytics-kpi"><span>Chi phí ước tính</span><strong id="analytics-cost">—</strong><small>USD · không phải hóa đơn</small></div>
+            <div class="analytics-kpi"><span>Có dữ liệu token</span><strong id="analytics-coverage">—</strong><small>Lượt có số liệu từ model</small></div>
+          </div>
+          <div class="analytics-charts-grid">
+            <section class="analytics-card" aria-labelledby="analytics-token-chart-title">
+              <h3 id="analytics-token-chart-title">Xu hướng token</h3>
+              <div id="analytics-token-chart" class="analytics-chart"></div>
+            </section>
+            <section class="analytics-card" aria-labelledby="analytics-cost-chart-title">
+              <h3 id="analytics-cost-chart-title">Chi phí ước tính theo thời gian</h3>
+              <div id="analytics-cost-chart" class="analytics-chart analytics-chart-cost"></div>
+            </section>
+          </div>
+          <section class="analytics-card" aria-labelledby="analytics-routes-title">
+            <h3 id="analytics-routes-title">Theo chức năng</h3>
+            <ul id="analytics-routes-list" class="analytics-route-list"></ul>
+          </section>
+          <section class="analytics-card" aria-labelledby="analytics-history-title">
+            <h3 id="analytics-history-title">Các lượt gọi AI gần đây</h3>
+            <ul id="analytics-history-list" class="analytics-history-list"></ul>
+          </section>
+          <p class="analytics-footnote">Dữ liệu bắt đầu từ khi bật chức năng này và chủ yếu ghi nhận các lượt AI trả về thành công. Chi phí chỉ là ước tính theo dữ liệu model có sẵn; số tiền thực tế hãy đối chiếu với OpenRouter. Không lưu nội dung câu hỏi vào bảng phân tích.</p>
         </section>
       </main>
 

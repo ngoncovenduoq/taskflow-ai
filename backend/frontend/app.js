@@ -22,6 +22,8 @@ const researchSizeToggle = $("#toggle-research-size");
 const researchSection = $("#research-section");
 const writingSizeToggle = $("#toggle-writing-size");
 const writingSection = $("#writing-section");
+const analyticsSizeToggle = $("#toggle-analytics-size");
+const analyticsSection = $("#analytics-section");
 const insightsStorageKey = "taskflow:token-panel-open-v3";
 const conversationStorageKey = "taskflow:active-conversation-v10";
 
@@ -53,6 +55,8 @@ let writingNavigationVersion = 0;
 let writingItems = [];
 let writingDocumentId = null;
 let writingDirty = false;
+let analyticsPeriod = "week";
+let analyticsRequestVersion = 0;
 
 function setChatExpanded(expanded) {
   const show = expanded === true;
@@ -79,6 +83,15 @@ function setWritingExpanded(expanded) {
   writingSizeToggle.setAttribute("aria-pressed", String(show));
   writingSizeToggle.setAttribute("aria-label", show ? "Thu nhỏ khung soạn thảo" : "Phóng to khung soạn thảo");
   writingSizeToggle.setAttribute("title", show ? "Thu nhỏ khung soạn thảo (Esc)" : "Phóng to khung soạn thảo");
+}
+
+function setAnalyticsExpanded(expanded) {
+  const show = expanded === true && !analyticsSection.hidden;
+  analyticsSection.classList.toggle("is-expanded", show);
+  document.body.classList.toggle("analytics-expanded", show);
+  analyticsSizeToggle.setAttribute("aria-pressed", String(show));
+  analyticsSizeToggle.setAttribute("aria-label", show ? "Thu nhỏ khung phân tích" : "Phóng to khung phân tích");
+  analyticsSizeToggle.setAttribute("title", show ? "Thu nhỏ khung phân tích (Esc)" : "Phóng to khung phân tích");
 }
 
 function readInsightsPreference() {
@@ -120,13 +133,12 @@ function costOrDash(value) {
 
 function formatRoute(route) {
   const names = {
-    general: "general",
-    writing: "writing",
-    research_write: "research + writing",
-    pdf: "PDF",
-    pdf_multi: "PDF · nhiều tài liệu",
-    research: "nghiên cứu web",
-    writing: "soạn thảo",
+    general: "Trò chuyện AI",
+    research_write: "Nghiên cứu + soạn thảo",
+    pdf: "Hỏi đáp PDF",
+    pdf_multi: "Nhiều tài liệu PDF",
+    research: "Nghiên cứu web",
+    writing: "Soạn thảo",
   };
   return typeof route === "string" ? (names[route] || route) : "—";
 }
@@ -661,10 +673,12 @@ function setActiveNav(button) {
 function showDashboard() {
   setResearchExpanded(false);
   setWritingExpanded(false);
+  setAnalyticsExpanded(false);
   $("#tasks-section").hidden = true;
   $("#documents-section").hidden = true;
   $("#research-section").hidden = true;
   $("#writing-section").hidden = true;
+  $("#analytics-section").hidden = true;
   $(".chat-section").hidden = false;
   setActiveNav($("[data-nav='assistant']"));
 }
@@ -673,9 +687,11 @@ function showTaskManager(focusInput = false) {
   setChatExpanded(false);
   setResearchExpanded(false);
   setWritingExpanded(false);
+  setAnalyticsExpanded(false);
   $("#documents-section").hidden = true;
   $("#research-section").hidden = true;
   $("#writing-section").hidden = true;
+  $("#analytics-section").hidden = true;
   $("#tasks-section").hidden = false;
   $(".chat-section").hidden = true;
   setActiveNav($("#open-tasks"));
@@ -813,9 +829,11 @@ function showDocuments() {
   setChatExpanded(false);
   setResearchExpanded(false);
   setWritingExpanded(false);
+  setAnalyticsExpanded(false);
   $("#tasks-section").hidden = true;
   $("#research-section").hidden = true;
   $("#writing-section").hidden = true;
+  $("#analytics-section").hidden = true;
   $(".chat-section").hidden = true;
   $("#documents-section").hidden = false;
   setActiveNav($("#open-documents"));
@@ -826,9 +844,11 @@ function showResearch() {
   setChatExpanded(false);
   setResearchExpanded(false);
   setWritingExpanded(false);
+  setAnalyticsExpanded(false);
   $("#tasks-section").hidden = true;
   $("#documents-section").hidden = true;
   $("#writing-section").hidden = true;
+  $("#analytics-section").hidden = true;
   $(".chat-section").hidden = true;
   $("#research-section").hidden = false;
   setActiveNav($("#open-research"));
@@ -839,13 +859,30 @@ function showWriting() {
   setChatExpanded(false);
   setResearchExpanded(false);
   setWritingExpanded(false);
+  setAnalyticsExpanded(false);
   $("#tasks-section").hidden = true;
   $("#documents-section").hidden = true;
   $("#research-section").hidden = true;
+  $("#analytics-section").hidden = true;
   $(".chat-section").hidden = true;
   $("#writing-section").hidden = false;
   setActiveNav($("#open-writing"));
   void loadWritingHistory();
+}
+
+function showAnalytics() {
+  setChatExpanded(false);
+  setResearchExpanded(false);
+  setWritingExpanded(false);
+  setAnalyticsExpanded(false);
+  $("#tasks-section").hidden = true;
+  $("#documents-section").hidden = true;
+  $("#research-section").hidden = true;
+  $("#writing-section").hidden = true;
+  $(".chat-section").hidden = true;
+  $("#analytics-section").hidden = false;
+  setActiveNav($("#nav-usage"));
+  void loadAnalytics();
 }
 
 function setResearchStatus(message, error = false) {
@@ -1219,6 +1256,147 @@ async function reviseWriting() {
     setWritingStatus(`Chưa chỉnh sửa được: ${error?.message || "lỗi kết nối"}`, true);
   } finally {
     setWritingBusy(false);
+  }
+}
+
+function setAnalyticsStatus(message, error = false) {
+  setText("#analytics-status", message);
+  $("#analytics-status").classList.toggle("is-error", error);
+}
+
+function renderAnalyticsBars(selector, series, field, isMoney) {
+  const container = $(selector);
+  container.replaceChildren();
+  const values = series.map((item) => Number.isFinite(item?.[field]) ? item[field] : 0);
+  const maximum = Math.max(0, ...values);
+  if (!maximum) {
+    const empty = document.createElement("p");
+    empty.className = "analytics-chart-empty";
+    empty.textContent = isMoney
+      ? "Chi phí ước tính bằng 0 hoặc chưa có đủ dữ liệu giá trong khoảng này."
+      : "Chưa ghi nhận token cho khoảng thời gian này.";
+    container.append(empty);
+    return;
+  }
+  for (let index = 0; index < series.length; index += 1) {
+    const item = series[index];
+    const value = values[index];
+    const row = document.createElement("div");
+    row.className = "analytics-chart-row";
+    const label = document.createElement("span");
+    label.className = "analytics-chart-label";
+    label.textContent = item.label;
+    const track = document.createElement("div");
+    track.className = "analytics-chart-track";
+    const fill = document.createElement("span");
+    fill.className = "analytics-chart-fill";
+    fill.style.width = `${Math.max(0, Math.min(100, value / maximum * 100))}%`;
+    track.append(fill);
+    const number = document.createElement("span");
+    number.className = "analytics-chart-number";
+    number.textContent = isMoney ? (item[field] == null ? "—" : costOrDash(value)) : numberOrDash(value);
+    row.append(label, track, number);
+    container.append(row);
+  }
+}
+
+function renderAnalyticsRoutes(routes) {
+  const list = $("#analytics-routes-list");
+  list.replaceChildren();
+  if (!routes.length) {
+    const empty = document.createElement("li");
+    empty.className = "analytics-list-empty";
+    empty.textContent = "Chưa có lượt gọi AI nào trong khoảng thời gian này.";
+    list.append(empty);
+    return;
+  }
+  for (const route of routes) {
+    const row = document.createElement("li");
+    row.className = "analytics-route-row";
+    const info = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = formatRoute(route.route);
+    const detail = document.createElement("small");
+    detail.textContent = `${numberOrDash(route.calls)} lượt · ${numberOrDash(route.measured_calls)} lượt có dữ liệu`;
+    info.append(name, detail);
+    const metrics = document.createElement("div");
+    metrics.className = "analytics-route-metrics";
+    const tokens = document.createElement("strong");
+    tokens.textContent = `${numberOrDash(route.total_tokens)} tokens`;
+    const money = document.createElement("small");
+    money.textContent = costOrDash(route.estimated_cost_usd);
+    metrics.append(tokens, money);
+    row.append(info, metrics);
+    list.append(row);
+  }
+}
+
+function renderAnalyticsHistory(items) {
+  const list = $("#analytics-history-list");
+  list.replaceChildren();
+  if (!items.length) {
+    const empty = document.createElement("li");
+    empty.className = "analytics-list-empty";
+    empty.textContent = "Lịch sử AI còn trống. Hãy gửi một câu hỏi để bắt đầu ghi nhận.";
+    list.append(empty);
+    return;
+  }
+  for (const item of items) {
+    const row = document.createElement("li");
+    row.className = "analytics-history-row";
+    const info = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = formatRoute(item.route);
+    const detail = document.createElement("small");
+    const modelNames = Array.isArray(item.by_model)
+      ? item.by_model.map((entry) => entry.model).filter((name) => typeof name === "string").slice(0, 2).join(", ")
+      : "";
+    detail.textContent = `${formatResearchDate(item.created_at)}${modelNames ? ` · ${modelNames}` : ""}`;
+    info.append(name, detail);
+    const metrics = document.createElement("div");
+    metrics.className = "analytics-history-metrics";
+    const tokens = document.createElement("strong");
+    tokens.textContent = item.usage_available ? `${numberOrDash(item.total_tokens)} tokens` : "Token: chưa rõ";
+    const money = document.createElement("small");
+    money.textContent = costOrDash(item.estimated_cost_usd);
+    metrics.append(tokens, money);
+    row.append(info, metrics);
+    list.append(row);
+  }
+}
+
+function renderAnalytics(data) {
+  const totals = data.summary;
+  setText("#analytics-calls", numberOrDash(totals.calls));
+  setText("#analytics-tokens", numberOrDash(totals.total_tokens));
+  setText("#analytics-cost", costOrDash(totals.estimated_cost_usd));
+  setText("#analytics-coverage", `${numberOrDash(totals.measured_calls)}/${numberOrDash(totals.calls)}`);
+  renderAnalyticsBars("#analytics-token-chart", data.series, "total_tokens", false);
+  renderAnalyticsBars("#analytics-cost-chart", data.series, "estimated_cost_usd", true);
+  renderAnalyticsRoutes(data.by_route);
+  renderAnalyticsHistory(data.history);
+}
+
+async function loadAnalytics() {
+  const version = ++analyticsRequestVersion;
+  setAnalyticsStatus("Đang tải thống kê từ SQLite...");
+  try {
+    const response = await fetch(`/api/analytics/overview?period=${analyticsPeriod}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || data?.period !== analyticsPeriod || !data.summary ||
+        !Number.isInteger(data.summary.calls) || !Array.isArray(data.series) ||
+        !Array.isArray(data.by_route) || !Array.isArray(data.history)) {
+      throw new Error(data?.detail || `HTTP ${response.status}`);
+    }
+    if (version !== analyticsRequestVersion) return;
+    renderAnalytics(data);
+    setAnalyticsStatus(data.summary.calls
+      ? `✓ ${numberOrDash(data.summary.calls)} lượt gọi AI · múi giờ Việt Nam (UTC+7).`
+      : "Chưa có lượt gọi AI nào trong khoảng này. Dữ liệu bắt đầu được ghi nhận sau khi cập nhật.");
+  } catch (error) {
+    if (version === analyticsRequestVersion) {
+      setAnalyticsStatus(`Không tải được phân tích: ${error?.message || "lỗi kết nối"}`, true);
+    }
   }
 }
 
@@ -1932,6 +2110,19 @@ for (const format of ["txt", "docx", "pdf"]) {
 researchSizeToggle.addEventListener("click", () => {
   setResearchExpanded(researchSizeToggle.getAttribute("aria-pressed") !== "true");
 });
+analyticsSizeToggle.addEventListener("click", () => {
+  setAnalyticsExpanded(analyticsSizeToggle.getAttribute("aria-pressed") !== "true");
+});
+$("#analytics-refresh").addEventListener("click", () => { void loadAnalytics(); });
+document.querySelectorAll("[data-analytics-period]").forEach((button) => {
+  button.addEventListener("click", () => {
+    analyticsPeriod = button.dataset.analyticsPeriod;
+    document.querySelectorAll("[data-analytics-period]").forEach((item) => {
+      item.setAttribute("aria-pressed", String(item === button));
+    });
+    void loadAnalytics();
+  });
+});
 $("#research-refresh").addEventListener("click", () => { void loadResearchHistory(); });
 $("#research-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -2043,6 +2234,9 @@ document.addEventListener("keydown", (event) => {
   } else if (event.key === "Escape" && writingSizeToggle.getAttribute("aria-pressed") === "true") {
     setWritingExpanded(false);
     writingSizeToggle.focus();
+  } else if (event.key === "Escape" && analyticsSizeToggle.getAttribute("aria-pressed") === "true") {
+    setAnalyticsExpanded(false);
+    analyticsSizeToggle.focus();
   }
 });
 
@@ -2058,10 +2252,7 @@ insightsToggle.addEventListener("click", () => {
   }
 });
 
-$("#nav-usage").addEventListener("click", () => {
-  setInsightsVisible(true, true);
-  usagePanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
+$("#nav-usage").addEventListener("click", showAnalytics);
 
 $("#quick-search-form").addEventListener("submit", (event) => {
   event.preventDefault();

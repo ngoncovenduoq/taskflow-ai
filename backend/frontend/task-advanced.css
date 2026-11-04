@@ -1,0 +1,143 @@
+/* v7 task enhancements — scoped to the task manager only. */
+
+/* When the create form + filters grow taller than the viewport, let the
+   whole task canvas scroll.  Keeping a second tiny nested list scroller
+   made lower task rows almost impossible to reach on shorter screens. */
+.tasks-section {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b4b3cb transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tasks-list-scroll {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding-bottom: 12px;
+}
+
+.tasks-footnote { padding-bottom: 5px; }
+
+.task-create-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-top: 3px;
+}
+
+.task-create-metadata label,
+.tasks-view-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #858a9e;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.task-create-metadata select,
+.task-create-metadata input,
+.tasks-view-options select {
+  min-height: 31px;
+  border: 1px solid #e7e7f1;
+  background: #fafaff;
+  border-radius: 9px;
+  padding: 6px 10px;
+  color: #5d627a;
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.task-create-metadata select:focus,
+.task-create-metadata input:focus,
+.tasks-view-options select:focus {
+  border-color: #a895ed;
+  box-shadow: 0 0 0 2px #e8e1ff;
+}
+
+.tasks-view-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 9px;
+  padding: 0 0 9px;
+}
+
+.tasks-view-options select { background: #fff; }
+.task-row-info { gap: 6px; }
+.task-row-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.task-priority-badge,
+.task-deadline {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 690;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.task-priority-badge.is-high { background: #fff0f3; color: #c85d79; }
+.task-priority-badge.is-medium { background: #fff5e5; color: #b7893e; }
+.task-priority-badge.is-low { background: #e9f9ef; color: #4aaf77; }
+.task-deadline { background: #f0f2ff; color: #7a82b0; }
+.task-deadline.is-overdue { background: #ffe5e9; color: #b43f58; }
+
+.task-row-actions { flex-wrap: wrap; justify-content: flex-end; }
+.task-row-actions .task-edit-button:hover { color: #6750bf; border-color: #c9b8fb; background: #f6f1ff; }
+.task-row.is-complete .task-row-actions .task-complete:hover { color: #8a67d7; border-color: #d6c6ef; background: #f9f5ff; }
+
+.task-row.is-editing { display: block; padding: 14px; background: #fff; border-color: #ccbdf3; }
+.task-edit-form { display: grid; grid-template-columns: minmax(130px, 1fr) 125px 142px auto; gap: 9px; align-items: center; }
+.task-edit-form input,
+.task-edit-form select {
+  min-width: 0;
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid #e3e5f0;
+  border-radius: 9px;
+  background: #f9f9fd;
+  color: #424961;
+  font: inherit;
+  font-size: 11px;
+}
+.task-edit-form input:focus,
+.task-edit-form select:focus { outline: 2px solid #cfbdf4; outline-offset: 1px; }
+.task-edit-actions { display: flex; gap: 5px; }
+.task-edit-actions button {
+  border: 1px solid #e5e5ef;
+  border-radius: 9px;
+  background: #f8f9fd;
+  color: #7a8094;
+  padding: 8px 10px;
+  font-size: 10px;
+  font-weight: 690;
+}
+.task-edit-actions .task-edit-save { background: #8276e8; border-color: #8276e8; color: #fff; }
+.task-edit-actions .task-edit-save:hover { background: #7466d6; }
+.task-edit-actions button:not(.task-edit-save):hover { background: #eff0f7; }
+
+@media (max-width: 1450px) {
+  .task-edit-form { grid-template-columns: minmax(150px, 1fr) 125px; }
+  .task-edit-actions { justify-content: flex-end; }
+}
+
+@media (max-width: 850px) {
+  .task-row { align-items: flex-start; }
+  .task-row-actions { margin-left: 0; }
+  .task-edit-form { grid-template-columns: minmax(0,1fr); }
+  .task-create-metadata label { min-width: 130px; }
+  .task-create-metadata input,
+  .task-create-metadata select { width: 100%; }
+  .tasks-view-options label { flex: 1 1 140px; }
+  .tasks-view-options select { width: 100%; }
+}

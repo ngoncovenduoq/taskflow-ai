@@ -1,0 +1,330 @@
+/* TaskFlow AI v6 — pastel AI chat inspired by the supplied reference.
+   Scoped to the chat canvas; dashboard cards, task manager and right rail stay intact. */
+
+.chat-section {
+  background:
+    radial-gradient(ellipse at 23% 56%, rgba(198, 217, 255, .80) 0%, transparent 58%),
+    radial-gradient(ellipse at 82% 35%, rgba(210, 183, 255, .61) 0%, transparent 64%),
+    linear-gradient(125deg, #eef4ff 1%, #e9e9ff 51%, #f6eafd 100%);
+  border-color: #e6e4f4;
+  box-shadow: inset 0 1px 0 #ffffff8a;
+}
+
+.chat-glow-header {
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  min-height: 56px;
+  padding: 15px 23px 0;
+  color: #25283b;
+}
+
+.chat-glow-header .chat-glow-title {
+  font-size: clamp(17px, 1.55vw, 22px);
+  font-weight: 670;
+  letter-spacing: -.55px;
+  color: #272a3b;
+}
+
+.chat-profile-badge {
+  position: absolute;
+  top: 12px;
+  right: 22px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: linear-gradient(125deg, #b9b3ff 4%, #eda8c9 95%);
+  box-shadow: 0 3px 10px #a2a0d83a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.chat-section .chat-scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: transparent;
+  padding: 0 clamp(12px, 2.5vw, 31px);
+  scrollbar-color: #b6b1d690 transparent;
+  scrollbar-width: thin;
+}
+
+.chat-section .chat-glow-welcome {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: 9px 16px 6px;
+  margin: auto;
+  gap: 0;
+  text-align: center;
+}
+
+.chat-section .chat-glow-welcome[hidden] { display: none !important; }
+
+.glow-orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(67px, 8.2vh, 94px);
+  height: clamp(67px, 8.2vh, 94px);
+  border-radius: 50%;
+  isolation: isolate;
+  margin: 0 auto clamp(16px, 2.8vh, 27px);
+  animation: glow-float 5.8s ease-in-out infinite;
+}
+
+.glow-orb::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle, #bc65f0ad 13%, #8172ff93 48%, transparent 72%);
+  filter: blur(12px);
+  opacity: .87;
+}
+
+.glow-orb::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: inherit;
+  border: 1.5px solid #f5a6ffd1;
+  box-shadow: 0 0 11px #e8b8fa8c, inset 0 0 11px #ffffff52;
+  pointer-events: none;
+}
+
+.glow-orb-core {
+  width: 88%;
+  height: 88%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 66% 67%, #fffce3 0%, #ffe8ba 17%, transparent 40%),
+    radial-gradient(circle at 33% 28%, #c265ff 0%, #aa6aef 24%, transparent 63%),
+    radial-gradient(circle at 78% 36%, #fcbce8 0%, transparent 49%),
+    linear-gradient(135deg, #7c5ef6, #e4b7ec 65%, #fff1c1);
+  border: 1px solid #dfadf4;
+  box-shadow:
+    0 0 17px #8c65ef87,
+    0 0 33px #a08dfd70,
+    inset 0 0 14px #f3e2ffb3;
+  transform: rotate(-12deg);
+}
+
+.chat-glow-welcome h2 {
+  margin: 0;
+  font-size: clamp(23px, 3.4vw, 36px);
+  font-weight: 690;
+  color: #25283a;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.glow-tagline {
+  margin: 9px 0 0;
+  color: #494e64;
+  font-size: clamp(13px, 1.65vw, 17px);
+  line-height: 1.45;
+  font-weight: 530;
+}
+
+.glow-description {
+  max-width: 560px;
+  margin: 7px auto 0;
+  color: #777c9b;
+  font-size: clamp(10px, 1.05vw, 12px);
+  line-height: 1.65;
+}
+
+.chat-section .messages {
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-top: 11px;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.chat-section .message.is-user .message-text {
+  background: #ffffffa8;
+  color: #42475f;
+  border: 1px solid #ffffffbb;
+  box-shadow: 0 5px 14px #9399c724;
+}
+
+.chat-section .message.is-assistant .message-text {
+  background: #fffefdec;
+  border-color: #ffffffdb;
+  box-shadow: 0 5px 15px #9c8db32b;
+}
+
+.chat-section .message.is-error .message-text {
+  background: #fff0f4;
+  border-color: #f8bfcf;
+  color: #a63c4a;
+}
+
+.chat-section .composer-wrap {
+  background: transparent;
+  padding: 5px clamp(12px, 2.2vw, 28px) clamp(12px, 2vh, 24px);
+}
+
+.chat-section .quick-prompts { margin-bottom: 10px; gap: 7px; }
+.chat-section .quick-prompts button {
+  background: #ffffffc7;
+  border-color: #ffffffd6;
+  color: #73799b;
+  font-size: 10px;
+  box-shadow: 0 2px 8px #9b92cc1a;
+}
+.chat-section .quick-prompts button:hover { color: #6c5bba; background: #fff; }
+
+.chat-section .composer {
+  max-width: 930px;
+  padding: 15px 20px 12px;
+  background: #fff;
+  border: 1px solid #b8b3ca;
+  border-radius: 21px;
+  box-shadow: 0 8px 25px #aaa0d53b;
+}
+
+.chat-section .composer:focus-within {
+  border-color: #a997e7;
+  box-shadow: 0 8px 28px #a597dc51, 0 0 0 3px #e7e3ff;
+}
+
+.chat-section .composer textarea {
+  min-height: 48px;
+  color: #303247;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.chat-section .composer textarea::placeholder { color: #858a9c; }
+.chat-section .glow-composer-footer {
+  padding-top: 4px;
+  border-top: 0;
+  align-items: center;
+}
+
+.glow-composer-tools { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.glow-tool-button {
+  border: 0;
+  background: transparent;
+  color: #525665;
+  font-size: 30px;
+  line-height: 1;
+  padding: 0 2px 3px;
+  border-radius: 8px;
+}
+.glow-tool-button:hover { background: #f2efff; color: #765cd2; }
+
+.glow-microphone { display: inline-flex; align-items: center; justify-content: center; color: #9da1ad; }
+.glow-microphone svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.glow-composer-tools .composer-hint { color: #abb0bd; font-size: 9px; white-space: nowrap; }
+
+.chat-section .composer-right { gap: 11px; }
+.chat-section .char-count { color: #a8abc0; font-size: 10px; white-space: nowrap; }
+.chat-section .glow-send-button {
+  display: grid;
+  place-items: center;
+  width: 37px;
+  height: 37px;
+  min-width: 37px;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #916df4 0%, #662acb 100%);
+  box-shadow: 0 4px 12px #8567e76b;
+}
+.chat-section .glow-send-button:hover:enabled {
+  background: linear-gradient(145deg, #8261e5, #5422b4);
+}
+.chat-section .glow-send-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: white;
+  stroke-width: 2.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes glow-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@media (max-height: 760px) and (min-width: 761px) {
+  .chat-glow-header { min-height: 45px; padding-top: 10px; }
+  .glow-orb { width: 67px; height: 67px; margin-bottom: 13px; }
+  .chat-section .composer-wrap { padding-bottom: 12px; }
+  .chat-section .quick-prompts { margin-bottom: 7px; }
+}
+
+@media (max-width: 760px) {
+  .chat-glow-header { min-height: 46px; padding-top: 11px; }
+  .chat-profile-badge { top: 9px; right: 13px; width: 27px; height: 27px; font-size: 11px; }
+  .chat-section .chat-glow-welcome { padding: 8px 8px; }
+  .glow-orb { width: 64px; height: 64px; margin-bottom: 18px; }
+  .chat-glow-welcome h2 { font-size: 24px; }
+  .glow-tagline { font-size: 13px; }
+  .glow-description { font-size: 10px; }
+  .chat-section .composer { padding: 11px 12px 8px; }
+  .chat-section .composer textarea { min-height: 46px; font-size: 12px; }
+  .glow-composer-tools .composer-hint { display: none; }
+  .chat-section .quick-prompts { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-orb { animation: none; }
+}
+
+/* v9.1: readable, safe DOM-based Markdown in assistant replies. */
+.chat-section .message.is-assistant .message-text.is-markdown { white-space: normal; line-height: 1.7; }
+.message-text.is-markdown > :first-child { margin-top: 0; }
+.message-text.is-markdown > :last-child { margin-bottom: 0; }
+.message-text.is-markdown p { margin: 0 0 10px; }
+.message-text.is-markdown h2,
+.message-text.is-markdown h3,
+.message-text.is-markdown h4,
+.message-text.is-markdown h5,
+.message-text.is-markdown h6 { color: #303751; margin: 15px 0 8px; line-height: 1.4; }
+.message-text.is-markdown h2 { font-size: 17px; }
+.message-text.is-markdown h3 { font-size: 15px; }
+.message-text.is-markdown h4,
+.message-text.is-markdown h5,
+.message-text.is-markdown h6 { font-size: 13px; }
+.message-text.is-markdown strong { color: #373957; font-weight: 800; }
+.message-text.is-markdown ul,
+.message-text.is-markdown ol { margin: 9px 0 12px; padding-left: 23px; }
+.message-text.is-markdown li { margin-bottom: 6px; padding-left: 2px; }
+.message-text.is-markdown li::marker { color: #8e73e7; }
+.message-text.is-markdown code { color: #7145b1; background: #f1edff; border-radius: 5px; padding: 1px 4px; font-size: .94em; }
+.message-text.is-markdown pre { margin: 11px 0; overflow-x: auto; border-radius: 11px; background: #f3f4fa; padding: 12px; }
+.message-text.is-markdown pre code { color: #30364c; background: transparent; padding: 0; white-space: pre; }
+.message-text.is-markdown a { color: #6554cd; text-decoration: underline; overflow-wrap: anywhere; }
+.message-text.is-markdown blockquote { margin: 10px 0; padding: 8px 12px; border-left: 3px solid #a99bfa; background: #f6f3ff; border-radius: 0 9px 9px 0; }
+.message-text.is-markdown hr { border: 0; border-top: 1px solid #e5e2f1; margin: 12px 0; }
+.message-text.is-markdown .markdown-table-scroll { max-width: 100%; margin: 12px 0; overflow-x: auto; border: 1px solid #e9e5f4; border-radius: 10px; }
+.message-text.is-markdown table { width: 100%; min-width: 500px; border-collapse: collapse; font-size: 11px; line-height: 1.55; }
+.message-text.is-markdown th,
+.message-text.is-markdown td { min-width: 110px; padding: 9px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid #eceaf4; border-right: 1px solid #efedf6; overflow-wrap: anywhere; }
+.message-text.is-markdown th { background: #f2efff; color: #62578e; font-weight: 750; }
+.message-text.is-markdown tr:nth-child(even) td { background: #fbfaff; }
+.message-text.is-markdown tr:last-child td { border-bottom: 0; }
+.message-text.is-markdown tr > :last-child { border-right: 0; }

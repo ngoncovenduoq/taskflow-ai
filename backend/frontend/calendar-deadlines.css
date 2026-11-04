@@ -1,0 +1,127 @@
+/* v8: SQLite task-deadline overview in the right sidebar. */
+.calendar-card .calendar-date { margin-bottom: 6px; }
+
+.calendar-summary {
+  margin: 0 0 12px;
+  color: #8993a7;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.calendar-task-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.calendar-task-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #eff0f7;
+  border-radius: 11px;
+  background: #f8f9fd;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.calendar-task-button:hover {
+  background: #f3efff;
+  border-color: #d9d3f8;
+}
+
+.calendar-task-button:focus-visible {
+  outline: 2px solid #9988ed;
+  outline-offset: 2px;
+}
+
+.calendar-task-date {
+  display: grid;
+  place-items: center;
+  flex: 0 0 46px;
+  height: 38px;
+  border-radius: 9px;
+  background: #eae9ff;
+  color: #7063b8;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.calendar-task-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.calendar-task-copy strong {
+  color: #4d5369;
+  font-size: 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.calendar-task-copy small {
+  color: #969db0;
+  font-size: 9px;
+}
+
+.calendar-task-list .is-overdue .calendar-task-date {
+  background: #ffe7ec;
+  color: #bd4962;
+}
+
+.calendar-task-list .is-completed .calendar-task-date {
+  background: #e9f9ee;
+  color: #4cae73;
+}
+
+.calendar-task-list .is-completed strong {
+  color: #989dab;
+  text-decoration: line-through;
+}
+
+.calendar-task-empty,
+.calendar-task-extra {
+  padding: 12px;
+  border-radius: 11px;
+  background: #f8f9fd;
+  color: #9ca4b3;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* v9: a free, rule-based daily focus plan, with optional paid AI refinement. */
+.daily-plan-card { background: linear-gradient(145deg, #fff 60%, #f6f2ff); }
+.daily-plan-summary { color: #778398; font-size: 10px; line-height: 1.6; margin: 0 0 11px; }
+.daily-plan-list { display: grid; gap: 7px; list-style: none; padding: 0; margin: 0; }
+.daily-plan-task {
+  display: flex; width: 100%; align-items: center; gap: 9px; text-align: left;
+  border: 1px solid #eceaf8; border-radius: 11px; padding: 9px;
+  background: #f8f8fe; cursor: pointer;
+}
+.daily-plan-task:hover { background: #f0ebff; border-color: #d7cff6; }
+.daily-plan-task:focus-visible { outline: 2px solid #9988ed; outline-offset: 2px; }
+.daily-plan-order {
+  display: grid; place-items: center; flex: 0 0 27px; height: 27px;
+  border-radius: 9px; background: #e7e0ff; color: #7160ba; font-weight: 800; font-size: 11px;
+}
+.daily-plan-copy { display: grid; min-width: 0; gap: 4px; }
+.daily-plan-copy strong { color: #484f69; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+.daily-plan-copy small { color: #9199ae; font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.daily-plan-empty { border-radius: 11px; background: #f8f8fe; padding: 12px; color: #8792a6; font-size: 10px; line-height: 1.6; }
+.daily-plan-note { margin: 10px 0; color: #a2a7b6; font-size: 9px; line-height: 1.5; }
+.daily-plan-ai-button {
+  border: none; width: 100%; border-radius: 11px; padding: 10px;
+  background: linear-gradient(110deg, #a4bafa, #c6a4ee); color: #fff;
+  font-size: 10px; font-weight: 750;
+}
+.daily-plan-ai-button:hover:enabled { filter: brightness(.97); }
+
+@media (max-width: 700px) {
+  .daily-plan-card { grid-column: 1 / -1; }
+}

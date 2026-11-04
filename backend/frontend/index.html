@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./theme.css" />
     <link rel="stylesheet" href="./dashboard.css" />
+    <link rel="stylesheet" href="./chat-glow.css" />
+    <link rel="stylesheet" href="./task-advanced.css" />
+    <link rel="stylesheet" href="./calendar-deadlines.css" />
     <script src="./app.js" defer></script>
   </head>
   <body>
@@ -76,33 +79,16 @@
         </section>
 
         <section class="chat-section" aria-label="Hội thoại TaskFlow AI">
-          <div class="chat-panel-header"><div><span class="chat-panel-dot"></span> TaskFlow Assistant</div><span class="chat-panel-subtitle">Đồng hành cùng công việc mỗi ngày</span></div>
+          <div class="chat-panel-header chat-glow-header">
+            <div class="chat-glow-title">AI Assistant</div>
+            <span class="chat-profile-badge" aria-label="Quân, người dùng hiện tại">Q</span>
+          </div>
           <div class="chat-scroll" id="chat-scroll">
-            <div class="welcome" id="welcome">
-              <div class="assistant-portrait" aria-label="Minh họa trợ lý AI">
-                <svg viewBox="0 0 180 198" role="img" aria-label="Hình minh họa trợ lý TaskFlow AI" xmlns="http://www.w3.org/2000/svg">
-                  <defs><linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8cfc5"/><stop offset="1" stop-color="#d8b5ae"/></linearGradient><linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#654b46"/><stop offset="1" stop-color="#3c343a"/></linearGradient></defs>
-                  <ellipse cx="90" cy="188" rx="69" ry="10" fill="#b7b2c5" opacity=".20"/>
-                  <path d="M42 80C35 28 61 12 92 14c47 2 64 31 51 97l-11 24H57Z" fill="url(#hair)"/>
-                  <path d="M36 180c4-36 24-54 53-56 33-2 53 17 57 56" fill="url(#shirt)"/>
-                  <path d="M75 115v20c1 16 30 16 31 0v-20" fill="#ddad9d"/>
-                  <ellipse cx="91" cy="79" rx="39" ry="47" fill="#e8bba9"/>
-                  <path d="M50 75c0-37 20-50 43-50 24 0 39 13 39 34-17-4-31-15-39-24C78 58 68 64 50 75Z" fill="url(#hair)"/>
-                  <path d="M71 78q8-5 16 0m13 0q8-5 16 0" fill="none" stroke="#554744" stroke-width="2.5" stroke-linecap="round"/>
-                  <circle cx="79" cy="82" r="2.5" fill="#3d3538"/><circle cx="108" cy="82" r="2.5" fill="#3d3538"/>
-                  <path d="M94 84q-3 12 2 12" fill="none" stroke="#c58f82" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M83 106q10 7 21-1" stroke="#b16b6e" stroke-width="3" fill="none" stroke-linecap="round"/>
-                  <path d="M63 127l28 24 27-24 16 46H49Z" fill="#f5e5e3"/>
-                  <path d="M69 131l23 24 26-25 15 50H52Z" fill="url(#shirt)"/>
-                  <path d="M50 72c-7 31-1 60 14 65-10-30-4-49-4-49ZM128 64c9 30 10 53-5 72 5-27 3-48 3-48Z" fill="url(#hair)"/>
-                </svg>
-                <div class="assistant-identity"><strong>TaskFlow AI</strong><span>Virtual Assistant</span></div>
-              </div>
-              <div class="welcome-conversation">
-                <div class="welcome-human">Xin chào! Hôm nay bạn giúp mình được gì?</div>
-                <div class="welcome-assistant"><span class="tiny-orb">✦</span><div><strong>Chào Quân! Mình là TaskFlow AI.</strong><p>Mình có thể giúp quản lý công việc, tìm hiểu tài liệu PDF, nghiên cứu thông tin và soạn nội dung theo yêu cầu của bạn.</p><ul><li>Tạo, xem và cập nhật công việc</li><li>Tìm nguồn thông tin có dẫn chứng</li><li>Viết email, báo cáo và nội dung chuyên nghiệp</li></ul></div></div>
-                <div class="welcome-thinking"><span class="tiny-orb">✦</span> Sẵn sàng hỗ trợ bạn...</div>
-              </div>
+            <div class="welcome chat-glow-welcome" id="welcome">
+              <div class="glow-orb" aria-hidden="true"><span class="glow-orb-core"></span></div>
+              <h2 id="hero-greeting">Chào Quân!</h2>
+              <p class="glow-tagline">Làm chủ ngày làm việc cùng trợ lý AI</p>
+              <p class="glow-description">Để TaskFlow AI hỗ trợ công việc, tài liệu PDF, nghiên cứu và sáng tạo nội dung — bạn tập trung vào điều quan trọng nhất.</p>
             </div>
             <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
           </div>
@@ -110,13 +96,22 @@
             <div class="quick-prompts" aria-label="Lệnh nhanh">
               <button type="button" data-open-tasks="list"><span>▤</span> Xem công việc</button>
               <button type="button" data-open-tasks="create"><span>✎</span> Tạo công việc</button>
-              <button type="button" data-prompt="Lập kế hoạch làm việc cho hôm nay dựa trên các công việc hiện tại của tôi."><span>▣</span> Lập kế hoạch</button>
+              <button type="button" id="quick-daily-plan"><span>▣</span> Lập kế hoạch</button>
               <button type="button" data-prompt="Viết báo cáo ngắn bằng tiếng Việt về tiến độ công việc."><span>✧</span> Tạo báo cáo</button>
             </div>
             <form id="chat-form" class="composer" autocomplete="off">
               <label class="sr-only" for="message-input">Nhập tin nhắn cho TaskFlow AI</label>
-              <textarea id="message-input" rows="1" maxlength="6000" placeholder="Nhập tin nhắn hoặc câu hỏi bất kỳ..." required></textarea>
-              <div class="composer-footer"><span class="composer-hint">Enter để gửi · Shift + Enter xuống dòng</span><div class="composer-right"><span id="char-count" class="char-count">0 / 6000</span><button type="submit" id="send-button" class="send-button" aria-label="Gửi tin nhắn"><span>Gửi</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 12 16-8-4 16-4-7-8-1Z"/><path d="m12 13 8-9"/></svg></button></div></div>
+              <textarea id="message-input" rows="1" maxlength="6000" placeholder="Hỏi TaskFlow AI bất cứ điều gì..." required></textarea>
+              <div class="composer-footer glow-composer-footer">
+                <div class="glow-composer-tools">
+                  <button type="button" id="composer-open-tasks" class="glow-tool-button" aria-label="Mở quản lý công việc" title="Mở quản lý công việc">+</button>
+                  <span class="glow-microphone" role="img" aria-label="Biểu tượng microphone; chức năng giọng nói chưa hỗ trợ" title="Nhập giọng nói: đang phát triển">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/></svg>
+                  </span>
+                  <span class="composer-hint">Enter để gửi · Shift + Enter xuống dòng</span>
+                </div>
+                <div class="composer-right"><span id="char-count" class="char-count">0 / 6000</span><button type="submit" id="send-button" class="send-button glow-send-button" aria-label="Gửi tin nhắn"><span class="sr-only">Gửi</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button></div>
+              </div>
             </form>
           </div>
         </section>
@@ -137,6 +132,18 @@
               <input id="task-title" type="text" name="title" maxlength="200" required placeholder="Ví dụ: Ôn tập bài NLP tối nay..." />
               <button type="submit" id="task-create-button">+ Thêm công việc</button>
             </div>
+            <div class="task-create-metadata">
+              <label for="task-priority">Độ ưu tiên
+                <select id="task-priority" name="priority">
+                  <option value="low">Thấp</option>
+                  <option value="medium" selected>Trung bình</option>
+                  <option value="high">Cao</option>
+                </select>
+              </label>
+              <label for="task-due-date">Hạn hoàn thành (không bắt buộc)
+                <input id="task-due-date" name="due_date" type="date" />
+              </label>
+            </div>
           </form>
 
           <div class="tasks-list-toolbar">
@@ -147,20 +154,46 @@
               <button type="button" data-task-filter="completed" aria-pressed="false">Đã hoàn thành</button>
             </div>
           </div>
+          <div class="tasks-view-options">
+            <label for="tasks-priority-filter">Ưu tiên
+              <select id="tasks-priority-filter">
+                <option value="all">Tất cả mức ưu tiên</option>
+                <option value="high">Cao</option>
+                <option value="medium">Trung bình</option>
+                <option value="low">Thấp</option>
+              </select>
+            </label>
+            <label for="tasks-sort">Sắp xếp
+              <select id="tasks-sort">
+                <option value="id">Theo thứ tự tạo</option>
+                <option value="priority">Ưu tiên cao trước</option>
+                <option value="due_date">Hạn gần nhất trước</option>
+              </select>
+            </label>
+          </div>
           <p class="tasks-status" id="tasks-status" role="status" aria-live="polite">Đang tải danh sách công việc...</p>
           <div class="tasks-list-scroll">
             <ul class="task-list" id="task-list" aria-label="Danh sách công việc"></ul>
           </div>
-          <p class="tasks-footnote">✓ Đánh dấu hoàn thành · 🗑 Xóa có xác nhận · Tất cả thao tác đều lưu vào SQLite.</p>
+          <p class="tasks-footnote">✎ Sửa nội dung · ↶ Mở lại công việc · 🗑 Xóa có xác nhận · Tất cả thay đổi lưu trong SQLite.</p>
         </section>
       </main>
 
       <aside class="insights" id="insights-panel" aria-label="Bảng thông tin bên phải">
         <section class="right-card calendar-card">
-          <div class="right-card-title"><strong>▦ &nbsp; Lịch</strong><span class="right-muted">Trong ngày</span></div>
+          <div class="right-card-title"><strong>▦ &nbsp; Lịch công việc</strong><span class="right-muted">SQLite</span></div>
           <div class="calendar-date" id="calendar-date">Hôm nay</div>
-          <div class="empty-detail"><span>◷</span><div><strong>Chưa kết nối lịch</strong><small>Bạn có thể nhờ AI lập kế hoạch ngay trong khung chat.</small></div></div>
-          <button type="button" class="side-action" data-prompt="Hãy giúp tôi lập kế hoạch làm việc cho ngày hôm nay.">Lập kế hoạch với AI</button>
+          <p class="calendar-summary" id="calendar-summary" role="status" aria-live="polite">Đang tải deadline từ SQLite...</p>
+          <ul class="calendar-task-list" id="calendar-task-list" aria-label="Các công việc có hạn hoàn thành"></ul>
+          <button type="button" class="side-action" id="calendar-open-tasks">Xem và cập nhật công việc</button>
+        </section>
+
+        <section class="right-card daily-plan-card" id="daily-plan-card" aria-labelledby="daily-plan-title">
+          <div class="right-card-title"><strong id="daily-plan-title">✦ &nbsp; Kế hoạch hôm nay</strong><span class="right-muted">SQLite</span></div>
+          <p id="daily-plan-summary" class="daily-plan-summary" role="status" aria-live="polite">Đang lên kế hoạch...</p>
+          <ol id="daily-plan-list" class="daily-plan-list" aria-label="Các công việc nên tập trung hôm nay"></ol>
+          <p class="daily-plan-note">Thời lượng chỉ là gợi ý: cao 50 phút, vừa 35 phút, thấp 25 phút.</p>
+          <button type="button" class="daily-plan-ai-button" id="daily-plan-ai-button" disabled>✦ Nhờ AI tối ưu kế hoạch · tốn token</button>
         </section>
 
         <section class="right-card progress-card">

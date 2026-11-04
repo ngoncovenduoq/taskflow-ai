@@ -1180,7 +1180,7 @@ async function sendMessage(message) {
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: trimmed }),
+      body: JSON.stringify({ message: trimmed, conversation_id: conversationId }),
       signal: controller.signal,
     });
 

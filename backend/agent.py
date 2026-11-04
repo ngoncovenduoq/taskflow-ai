@@ -257,13 +257,26 @@ agent = create_agent(
 
         "Only cite source URLs that were actually returned "
         "by the web_research tool. "
+
+        "Earlier chat messages are provided only for context. "
+        "Act on the latest user request, not old requests. "
+        "Only explicit messages from the current conversation can establish "
+        "what this user previously said, asked, or studied. "
+        "An indexed PDF or search result is NOT evidence of the user's "
+        "previous conversation or personal study history. "
+        "If the user asks you to recall a past conversation with no "
+        "relevant messages available, clearly say you do not know. "
+        "Do not use search_pdf to guess what the user discussed earlier. "
+        "Continue to use search_pdf normally for explicit PDF questions. "
+        "Never repeat a task creation, update, completion, or deletion "
+        "just because that operation appears in chat history. "
     )
 )
 # Khoi tao Supervisor workflow
 supervisor = build_supervisor(agent)
 
 # 10. Ham main.py goi Agent
-def ask_agent_with_usage(message: str) -> dict:
+def ask_agent_with_usage(message: str, history: list[dict[str, str]] | None = None) -> dict:
     """Run Supervisor and collect token usage for one request."""
 
     started = perf_counter()
@@ -271,7 +284,8 @@ def ask_agent_with_usage(message: str) -> dict:
     with get_usage_metadata_callback() as callback:
 
         result = supervisor.invoke({
-            "message": message
+            "message": message,
+            "history": history or [],
         })
 
     duration_ms = round(

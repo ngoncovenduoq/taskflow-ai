@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from task_api import router as task_router
 from conversation_api import router as conversation_router
+from chat_history import asks_about_prior_chat, get_recent_conversation_context
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ app.mount(
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=6000)
+    conversation_id: int | None = Field(default=None, gt=0)
 
     @field_validator("message")
     @classmethod
@@ -60,7 +62,37 @@ def health():
 def chat(request: ChatRequest):
 
     try:
-        return ask_agent_with_usage(request.message)
+        history = []
+        if request.conversation_id is not None:
+            history = get_recent_conversation_context(
+                request.conversation_id, request.message
+            )
+            if history is None:
+                raise HTTPException(status_code=404, detail="Không tìm thấy hội thoại.")
+
+        # An empty chat has no personal conversation memories.  A PDF indexed
+        # elsewhere is not evidence of what this user said in this chat.
+        # Resolve explicit memory-recall questions locally, without LLM cost.
+        if not history and asks_about_prior_chat(request.message):
+            return {
+                "response": (
+                    "Mình chưa có thông tin về nội dung trò chuyện trước đó "
+                    "trong cuộc trò chuyện này. Bạn có thể nhắc lại chủ đề "
+                    "để mình hỗ trợ tiếp nhé!"
+                ),
+                "usage": {
+                    "route": "local_memory",
+                    "usage_available": True,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "reasoning_tokens": 0,
+                    "estimated_cost_usd": 0,
+                    "duration_ms": 0,
+                    "by_model": [],
+                },
+            }
+        return ask_agent_with_usage(request.message, history=history)
 
     except HTTPException:
         raise

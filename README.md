@@ -16,6 +16,14 @@ TaskFlow AI brings task management, AI chat, PDF question answering, web researc
 | **AI usage analytics** | View recorded calls, token counts, estimated model costs, and daily/weekly/monthly summaries. |
 | **Resizable workspace** | Expand chat and research areas for longer responses. |
 
+## Screenshots
+
+![TaskFlow AI Dashboard](docs/screenshots/dashboard.png)
+
+[AI Chat](docs/screenshots/ai-chat.png) ·
+[PDF Q&A](docs/screenshots/pdf-rag.png) ·
+[AI Analytics](docs/screenshots/analytics.png)
+
 ## Tech stack
 
 | Component | Technologies |

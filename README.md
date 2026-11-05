@@ -6,13 +6,15 @@ TaskFlow AI brings task management, AI chat, PDF question answering, web researc
 
 ## Features
 
-- **Tasks & dashboard:** Manage tasks, deadlines, completion status, and daily plans.
-- **AI chat:** Chat with an AI assistant and keep separate, persistent conversation histories.
-- **PDF Q&A (RAG):** Upload and index text-based PDFs, ask questions, and see document/page references. Supports selecting multiple PDFs.
-- **Web research:** Search with Tavily, summarize retrieved sources, and save research history.
-- **AI writing:** Generate, edit, and revise drafts; export TXT, DOCX, or PDF.
-- **Usage analytics:** Track recorded AI requests, token usage, and estimated costs.
-- **Flexible UI:** Expand chat and research panels for longer content.
+| Feature | What it does |
+| --- | --- |
+| **Task management & dashboard** | Create, update, complete, reopen, and delete tasks; track deadlines and progress. |
+| **AI chat & conversation history** | Chat with an AI assistant, save conversations, reopen previous messages, and keep conversations isolated. |
+| **PDF knowledge base (RAG)** | Upload text-based PDFs, index them, ask document-grounded questions, and receive source/page references. Supports selecting multiple indexed PDFs. |
+| **Web research** | Retrieve web search results, generate a source-linked summary, and save research history. |
+| **AI writing** | Generate and revise drafts, edit saved content, and export TXT, DOCX, or PDF files. |
+| **AI usage analytics** | View recorded calls, token counts, estimated model costs, and daily/weekly/monthly summaries. |
+| **Resizable workspace** | Expand chat and research areas for longer responses. |
 
 ## Tech stack
 

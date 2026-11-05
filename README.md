@@ -1,108 +1,102 @@
-# TaskFlow AI — v1.0 release candidate (localhost)
+# TaskFlow AI
 
-TaskFlow AI là trợ lý AI cá nhân chạy trên FastAPI, SQLite và giao diện HTML/CSS/JavaScript thuần. Các tính năng: quản lý công việc/deadline, AI Chat và lịch sử, hỏi đáp PDF với ChromaDB, nghiên cứu web, soạn thảo/xuất tài liệu và thống kê token/chi phí.
+Trợ lý AI cá nhân chạy trên máy người dùng: quản lý công việc/deadline, AI Chat và lịch sử hội thoại, hỏi đáp nhiều PDF (RAG), nghiên cứu web, soạn thảo/xuất tài liệu và phân tích token/chi phí. Backend dùng FastAPI + SQLite + ChromaDB; frontend dùng HTML/CSS/JavaScript.
 
-> **Trạng thái:** Ứng viên v1.0 để thử trên máy cá nhân, **chưa phải bản triển khai công khai**. Người dùng đã xác nhận 8/8 bài kiểm thử tích hợp ngày 05/11/2026. Chưa có đăng nhập/phân quyền cho nhiều người dùng.
+**Trạng thái:** bản v1.0 chạy cục bộ (localhost), chưa có đăng nhập/phân quyền để đưa lên Internet. Trên máy tác giả, 41 unit test và 8 bài kiểm thử tích hợp đã đạt (05/11/2026). Mỗi máy clone cần kiểm tra lại.
 
-## 1. Cấu trúc repository
+## Clone và chạy trên Windows
 
-Trong repository chạy thật, giao diện phải nằm **trong** `backend/frontend`:
+**Chuẩn bị:** cài Git và **Python 3.10** (có Python Launcher `py`), có Internet để tải thư viện và gọi AI. Bạn cần **OpenRouter API key của mình** để sử dụng AI thật. Nếu muốn nghiên cứu web, cần thêm Tavily API key.
+
+1. Mở PowerShell, chạy (thay URL bằng URL repository thật):
+
+   ```powershell
+   git clone https://github.com/USERNAME/taskflow-ai.git
+   cd taskflow-ai
+   ```
+
+2. Nhấp đúp **`SETUP.bat`** tại thư mục gốc. Chương trình tự tạo `.venv`, cài thư viện và kiểm tra cấu trúc. Khi được hỏi, nhập OpenRouter API key (ký tự không hiển thị); Tavily key có thể để trống. Việc cài đặt chỉ cần làm một lần.
+3. Nhấp đúp **`START.bat`**. Chờ trình duyệt mở **http://127.0.0.1:8000/ui/**.
+4. Thử tạo công việc, trò chuyện AI hoặc tải PDF. Để tắt ứng dụng, nhấn `Ctrl+C` ở cửa sổ đang chạy.
+
+> **Bảo mật:** API key lưu cục bộ trong `backend/.env` dưới dạng văn bản và file đã được `.gitignore` bỏ qua. Không chia sẻ file này, không commit lên GitHub. Người clone dùng key của **chính họ**; dự án không kèm key của tác giả. Nếu tác giả muốn cung cấp quyền truy cập API cho người khác mà **không cần cấp key**, phải triển khai backend riêng có xác thực và hạn mức — không thể an toàn bằng cách nhúng key vào một repo công khai.
+
+`SETUP.bat` ưu tiên `requirements-lock.txt` (được tạo từ môi trường đã kiểm thử). Nếu không có, script dùng `requirements.txt` chưa khóa phiên bản và cảnh báo. **Tác giả cần commit `requirements-lock.txt` lên GitHub** để người clone có môi trường sát bản đã kiểm thử.
+
+## Chạy thủ công bằng PowerShell
+
+Nếu không muốn dùng `.bat`, mở PowerShell tại thư mục repo:
+
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe backend\check_release.py
+.\.venv\Scripts\python.exe setup_local.py
+.\.venv\Scripts\python.exe app_launcher.py
+```
+
+Nếu không có `requirements-lock.txt`, dùng `requirements.txt` thay thế, rồi kiểm tra tính tương thích. Muốn tự cấu hình mà không chạy wizard, sao chép `backend/.env.example` thành `backend/.env`, thay `OPENROUTER_API_KEY` bằng key thật và bỏ trống `TAVILY_API_KEY` nếu không dùng Nghiên cứu web.
+
+Để xem log backend bằng cách chạy trực tiếp:
+
+```powershell
+cd backend
+..\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+Trang web: http://127.0.0.1:8000/ui/ · Health: http://127.0.0.1:8000/health · API Docs: http://127.0.0.1:8000/docs
+
+## Kiểm tra sau khi clone
+
+Trong thư mục repo:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s backend -p "test_*.py" -v
+```
+
+Sau đó kiểm tra trực tiếp:
+
+- Truy cập `/health` thấy `{"status":"ok"}`.
+- Tạo và hoàn thành một công việc; Dashboard cập nhật.
+- Gửi câu hỏi trong AI Chat, mở lại lịch sử và nhấn F5.
+- Tải PDF văn bản (tối đa 5 MB), hỏi thông tin và xem dẫn nguồn.
+- Nghiên cứu web nếu đã điền Tavily key.
+- Soạn thảo, chỉnh sửa và xuất TXT/DOCX/PDF; kiểm tra Phân tích AI.
+
+## Cấu trúc cần có trong GitHub
 
 ```text
 taskflow-ai/
-├── README.md
+├── SETUP.bat                # Cài trên Windows
+├── START.bat                # Chạy ứng dụng
+├── setup_local.py
+├── app_launcher.py
+├── requirements-lock.txt   # Nên có: khóa phiên bản đã test
 ├── requirements.txt
-├── RELEASE_CHECKLIST.md
 ├── .gitignore
 └── backend/
     ├── main.py
     ├── agent.py
     ├── supervisor.py
-    ├── security.py
     ├── research_search.py
     ├── writing_agent.py
     ├── api_errors.py
     ├── usage_tracker.py
-    ├── check_release.py
     ├── .env.example
-    ├── ... các API, kho SQLite và test khác ...
+    ├── ... các module và test khác ...
     └── frontend/
         ├── index.html
         ├── app.js
         └── *.css
 ```
 
-**Lưu ý về bản sao trong ChatGPT:** `frontend/` hiện đang nằm ngang cấp `backend/` để kiểm thử UI và thiếu bốn module `research_search.py`, `writing_agent.py`, `api_errors.py`, `usage_tracker.py`. Chúng có thể đã tồn tại trong repository trên máy Quân. Xác nhận bằng `check_release.py`; không chép đè các module hiện chạy tốt bằng bản cũ chỉ để đủ danh sách.
+**Quan trọng:** `frontend/` phải nằm trong **`backend/frontend/`**; `main.py` phục vụ giao diện tại đường dẫn này. Không đưa `.env`, `.db`, tài liệu PDF riêng tư, chỉ mục Chroma, hay `.venv` lên Git.
 
-## 2. Cài đặt Windows (PowerShell)
+## Giới hạn hiện tại
 
-Khuyến nghị Python 3.12, cùng phiên bản đã chạy trên máy Quân. Trong thư mục gốc repository:
+- Chạy cục bộ tại `127.0.0.1`; không mở `0.0.0.0` khi chưa có xác thực, phân quyền và biện pháp bảo vệ.
+- AI Chat/OpenRouter và Nghiên cứu web/Tavily cần Internet và key hợp lệ, có thể phát sinh chi phí.
+- PDF scan chưa hỗ trợ OCR; lịch sử và dữ liệu SQLite/ChromaDB được lưu trên máy đang sử dụng, mỗi máy độc lập.
+- Thống kê chi phí AI là ước tính, không phải hóa đơn.
 
-**Nếu Quân đã có `.venv` đang chạy tốt, không cài lại thư viện trong môi trường đó.** Các lệnh dưới đây dành cho lần cài mới hoặc một môi trường thử nghiệm riêng; dùng `requirements-lock.txt` đã được kiểm thử khi có thể.
-
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-`requirements.txt` liệt kê thư viện trực tiếp nhưng **chưa khóa phiên bản**; bản sao hiện tại không có dữ liệu phiên bản từ môi trường Windows đã chạy thành công. Sau khi kiểm thử ổn định trên máy, tạo bản khóa:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip freeze > requirements-lock.txt
-```
-
-Rà soát `requirements-lock.txt` xem có URL chứa thông tin đăng nhập không trước khi commit. Không tự nâng cấp tất cả thư viện của bản đang hoạt động mà chưa kiểm thử lại.
-
-## 3. Cấu hình riêng tư
-
-```powershell
-Copy-Item backend\.env.example backend\.env
-```
-
-Sửa `backend/.env` **trên máy cá nhân**, thay các chuỗi mẫu bằng key OpenRouter và (nếu dùng) Tavily thật. Không nhập key trong frontend, commit `.env` hoặc gửi key trong chat.
-
-## 4. Kiểm tra trước khi chạy
-
-Từ thư mục gốc, dùng đúng venv:
-
-```powershell
-.\.venv\Scripts\python.exe backend\check_release.py
-```
-
-Script chỉ kiểm tra file/thư viện và sự hiện diện của cấu hình, **không đọc hay in API key** và không gọi mô hình. Nếu thiếu module, bổ sung từ bộ nguồn hiện tại trước khi đóng gói.
-
-Chạy unit test:
-
-```powershell
-cd backend
-..\.venv\Scripts\python.exe -m unittest discover -p "test_*.py" -v
-```
-
-## 5. Khởi động trên localhost
-
-Từ thư mục `backend`:
-
-```powershell
-..\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-- Giao diện: http://127.0.0.1:8000/ui/
-- Kết nối: http://127.0.0.1:8000/health
-- Swagger: http://127.0.0.1:8000/docs
-
-Khi thay CSS/JS, nhấn `Ctrl + F5`. Kiểm tra các tính năng theo `RELEASE_CHECKLIST.md`.
-
-## 6. Dữ liệu, chi phí và giới hạn hiện tại
-
-- SQLite và ChromaDB giữ dữ liệu cục bộ. **Không xóa** `.db`, tài liệu hoặc chỉ mục khi cập nhật code.
-- PDF văn bản tối đa 5 MB, chưa hỗ trợ OCR bản scan.
-- OpenRouter/Tavily có thể phát sinh chi phí. Con số trong Phân tích AI chỉ là **ước tính**, không phải hóa đơn.
-- Lịch sử sử dụng AI chỉ lưu các lượt gọi kể từ khi bật thống kê.
-- Giao diện chạy không cần Node.js; Node chỉ để chạy bài kiểm thử mock tùy chọn.
-- Middleware `security.py` giới hạn nguồn trình duyệt và Host localhost, **không thay thế xác thực**. Không mở `--host 0.0.0.0` khi chưa có cơ chế bảo vệ phù hợp.
-- Phiên cải thiện trạng thái tải và xử lý lỗi đã được Quân chọn **bỏ qua**.
-
-## 7. Triển khai thật
-
-Chỉ xem xét triển khai công khai sau khi có xác thực/phân quyền, HTTPS, kiểm soát tần suất gọi AI, sao lưu, tách dữ liệu người dùng và kiểm tra bảo mật. Xem checklist phát hành để biết các bước chưa hoàn thành.
+Xem [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md) để kiểm tra trước khi công bố bản mới.

@@ -40,3 +40,14 @@ Người dùng đã xác nhận **8/8 bài kiểm thử tích hợp** ngày 05/1
 - [ ] Backup/restore, kiểm tra bảo mật, kế hoạch cập nhật phụ thuộc.
 
 Middleware localhost **không phải** giải pháp thay thế cho các mục này.
+
+## E. Kiểm tra khả năng clone và chạy trên Windows sạch
+
+- [ ] `requirements-lock.txt` đã được push cùng `SETUP.bat`, `START.bat`, `setup_local.py`, `app_launcher.py` và README mới.
+- [ ] Clone repository vào **thư mục hoàn toàn mới** trên máy sạch, có Python 3.10.
+- [ ] Chạy `SETUP.bat`: tạo `.venv`, cài thư viện, chạy `check_release.py` và nhập **API key riêng của người chạy**.
+- [ ] Xác nhận `backend/.env` được tạo cục bộ và **không bị Git theo dõi** (`git status --ignored`).
+- [ ] Chạy `START.bat`, trình duyệt tự mở `http://127.0.0.1:8000/ui/`.
+- [ ] Kiểm thử AI Chat và CRUD nhiệm vụ thật. Thử Nghiên cứu web nếu đã cấu hình Tavily.
+- [ ] Đóng và mở lại bằng `START.bat`: không cần cài lại hay nhập lại key.
+- [ ] Xác nhận API key không xuất hiện trong GitHub, log, ảnh chụp hay README.

@@ -2,7 +2,8 @@
 import logging
 import re
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 from dashboard_api import router as dashboard_router
 from agent import ask_agent_with_usage, ask_pdf_with_usage, ask_pdfs_with_usage
@@ -18,6 +19,7 @@ from analytics_api import router as analytics_router
 from usage_history import record_usage_safely
 from chat_history import asks_about_prior_chat, get_recent_conversation_context
 from rag_store import list_documents
+from security import is_allowed_browser_request
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,32 @@ app = FastAPI(
     description="My First AI Agent Project",
     version="1.0.0"
 )
+
+
+@app.middleware("http")
+async def secure_browser_requests(request: Request, call_next):
+    """Reject cross-site writes and non-local Host headers before any route runs."""
+    if not is_allowed_browser_request(
+        request.method,
+        request.url.scheme,
+        request.headers.get("host", ""),
+        request.headers.get("origin"),
+        request.headers.get("sec-fetch-site"),
+    ):
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "Chỉ cho phép truy cập từ giao diện TaskFlow AI trên localhost."},
+        )
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    if request.url.path.startswith(("/api/", "/documents/", "/chat", "/dashboard/")):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 app.include_router(dashboard_router)
 app.include_router(document_router)
 app.include_router(task_router)

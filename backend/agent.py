@@ -97,7 +97,8 @@ def remove_task(task_id: int) -> str:
 @tool
 def search_pdf(question: str) -> str:
     """Search indexed PDF documents for relevant information and page references."""
-    print(f"[DOCUMENT AGENT] Searching PDF: {question}")
+    # PDF queries may contain personal data. Never echo them to server logs.
+    print("[DOCUMENT AGENT] Searching indexed PDFs")
     results = search_documents(
         question=question,
         top_k=3
@@ -131,7 +132,7 @@ def search_pdf(question: str) -> str:
 def web_research(query: str) -> str:
     """Search the internet for current information and reliable sources."""
 
-    print(f"[RESEARCH AGENT] Searching web: {query}")
+    print("[RESEARCH AGENT] Searching web")
 
     results = search_web(query)
 

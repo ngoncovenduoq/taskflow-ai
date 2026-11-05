@@ -27,3 +27,33 @@ tasks.db
 
 backend/data/
 backend/chroma_db/
+
+# Secrets: never commit API keys.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Personal task/chat/research/writing data and model indexes.
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+backend/data/
+backend/chroma_db/
+*.pdf
+*.docx
+*.backup-*
+
+# Python and editor artifacts.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.vscode/
+.idea/

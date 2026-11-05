@@ -255,9 +255,8 @@ GENERAL
             flags=re.IGNORECASE
         )[0].strip()
 
-        print(
-            f"[RESEARCH AGENT] Searching web: {query}"
-        )
+        # Search terms can include confidential details; log no raw prompts.
+        print("[RESEARCH AGENT] Searching web")
 
         results = search_web(query)
 

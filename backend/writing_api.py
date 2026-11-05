@@ -201,8 +201,11 @@ def download_writing(draft_id: int = Path(gt=0), format: Literal["txt", "docx", 
     try:
         contents = exporters[format](draft["title"], draft["content"])
     except (ImportError, RuntimeError) as error:
-        logger.warning("Export unavailable: %s", error)
-        raise HTTPException(status_code=503, detail=str(error)) from error
+        logger.warning("Export unavailable: type=%s", type(error).__name__)
+        raise HTTPException(
+            status_code=503,
+            detail="Chưa thể xuất tài liệu do thiếu thư viện hoặc font trên máy chủ.",
+        ) from error
     except Exception as error:
         logger.error("Export failed: type=%s", type(error).__name__)
         raise HTTPException(status_code=500, detail="Không xuất được tài liệu.") from error

@@ -24,6 +24,8 @@ TaskFlow AI brings task management, AI chat, PDF question answering, web researc
 [PDF Q&A](docs/screenshots/pdf-rag.png) ·
 [AI Analytics](docs/screenshots/analytics.png)
 
+📐 [System Architecture](docs/ARCHITECTURE.md)
+
 ## Tech stack
 
 | Component | Technologies |

@@ -63,32 +63,33 @@ TaskFlow AI brings task management, AI chat, PDF question answering, web researc
 4. Try web research (with Tavily configured), generate a draft, and export it.
 5. Refresh or restart the app to verify saved data persists.
 
-## Testing
-
-Run automated tests from the repository root after setup:
-
-```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s backend -p "test_*.py" -v
-.\.venv\Scripts\python.exe -m unittest -v test_local_run.py
-```
-
-**Verified on the original Windows development machine (November 2026):** 41 backend unit tests and 8 manual integration scenarios passed. The local setup/launcher suite has 8 passing tests. Results should be rechecked after cloning or updating dependencies.
-
-For detailed checks, see [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). API documentation is available at **http://127.0.0.1:8000/docs** when running.
-
-## Repository layout
+## Project structure
 
 ```text
 taskflow-ai/
-├── SETUP.bat / START.bat      # One-time setup / local launch
-├── setup_local.py / app_launcher.py
-├── requirements-lock.txt
+├── SETUP.bat                 # First-time Windows setup
+├── START.bat                 # Launch the local application
+├── setup_local.py            # Local API-key configuration
+├── app_launcher.py           # Backend launch and browser readiness
+├── requirements.txt          # Direct dependencies
+├── requirements-lock.txt     # Tested, pinned environment (recommended)
+├── README.md
 └── backend/
-    ├── main.py               # FastAPI entry point
-    ├── agent.py              # AI integration
-    ├── rag_store.py          # PDF retrieval
-    ├── ... API and storage modules ...
-    └── frontend/             # HTML, CSS, JavaScript
+    ├── main.py               # FastAPI app and /ui mount
+    ├── agent.py              # AI tools and model integration
+    ├── supervisor.py         # AI request orchestration
+    ├── task_api.py
+    ├── conversation_api.py
+    ├── document_api.py
+    ├── research_api.py
+    ├── writing_api.py
+    ├── analytics_api.py
+    ├── rag_store.py           # Document indexing/retrieval
+    ├── .env.example           # Safe configuration template
+    └── frontend/             # HTML, CSS, and JavaScript UI
+        ├── index.html
+        ├── app.js
+        └── *.css
 ```
 
 ## Current scope

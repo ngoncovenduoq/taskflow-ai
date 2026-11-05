@@ -60,7 +60,3 @@ The PDF pipeline currently supports text-based PDFs up to **5 MB** per file; it 
 - **Localhost:** the development server binds to `127.0.0.1`. Same-origin/Host checks provide local browser protections but are **not** multi-user authentication.
 - **External calls:** OpenRouter and Tavily require Internet access and may incur charges. Reported model costs are estimates, not invoices.
 - **Scope:** this is a local single-user application. Hosting it publicly would first require authentication, user isolation, rate limiting, and other security work.
-
-## Suggested interview explanation (30 seconds)
-
-> "TaskFlow AI is a local productivity assistant built with FastAPI and a vanilla JavaScript frontend. Tasks, conversations, drafts, and AI usage are stored in SQLite. AI requests are orchestrated with LangChain and LangGraph through OpenRouter. For document questions, I extract text from PDFs, index chunks in ChromaDB, retrieve relevant passages, and provide answers with source-page references. Web research uses Tavily, and the app can generate and export documents. I also added automated tests and a first-run setup so reviewers can clone and run it locally."

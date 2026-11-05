@@ -1,0 +1,16 @@
+# Direct runtime dependencies. Unpinned until a tested Windows lock is available.
+fastapi
+uvicorn
+pydantic
+python-multipart
+python-dotenv
+langchain
+langchain-core
+langchain-openrouter
+langgraph
+chromadb
+pypdf
+tavily-python
+requests
+python-docx
+reportlab
